@@ -1,0 +1,4 @@
+---
+BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries"
+BUNDLE_JOBS: "4"
+BUNDLE_RETRY: "3"
