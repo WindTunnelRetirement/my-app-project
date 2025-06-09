@@ -2,7 +2,6 @@ services:
   # PostgreSQL Database
   - type: pserv
     name: miniapp-db
-    env: ruby
     plan: free
     region: oregon
 
@@ -12,7 +11,7 @@ services:
     env: ruby
     region: oregon
     plan: free
-    buildCommand: cd backend && bundle install
+    buildCommand: cd backend && bundle install && rails db:migrate
     startCommand: cd backend && bundle exec rails server -b 0.0.0.0 -p $PORT
     envVars:
       - key: RAILS_ENV
@@ -30,7 +29,6 @@ services:
   - type: web
     name: miniapp-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
