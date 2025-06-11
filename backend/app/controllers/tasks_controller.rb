@@ -1,22 +1,36 @@
 class TasksController < ApplicationController
-  before_action :set_task, only: [:show, :update, :destroy, :toggle]
+  before_action :set_task, only: [:update, :destroy, :toggle]  # show を削除
 
-  # GET /tasks
   def index
-    @tasks = Task.all.order(created_at: :desc)
+    @tasks = Task.all
+    
+    # フィルタリング
+    @tasks = @tasks.by_priority(params[:priority]) if params[:priority].present?
+    @tasks = @tasks.by_category(params[:category]) if params[:category].present?
+    
+    case params[:status]
+    when 'completed'
+      @tasks = @tasks.completed
+    when 'pending'
+      @tasks = @tasks.pending
+    end
+    
+    # 並び替え (優先度順、作成日順)
+    case params[:sort]
+    when 'priority'
+      @tasks = @tasks.order(:priority, :created_at)
+    when 'created_at'
+      @tasks = @tasks.order(:created_at)
+    else
+      @tasks = @tasks.order(:priority, :created_at) # デフォルトは優先度順
+    end
+    
     render json: @tasks
   end
 
-  # GET /tasks/1
-  def show
-    render json: @task
-  end
-
-  # POST /tasks
   def create
     @task = Task.new(task_params)
-    @task.done = false if @task.done.nil?
-
+    
     if @task.save
       render json: @task, status: :created
     else
@@ -24,7 +38,6 @@ class TasksController < ApplicationController
     end
   end
 
-  # PATCH/PUT /tasks/1
   def update
     if @task.update(task_params)
       render json: @task
@@ -33,13 +46,11 @@ class TasksController < ApplicationController
     end
   end
 
-  # DELETE /tasks/1
   def destroy
     @task.destroy
     head :no_content
   end
 
-  # PATCH /tasks/1/toggle
   def toggle
     @task.update(done: !@task.done)
     render json: @task
@@ -52,6 +63,6 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:title, :done)
+    params.require(:task).permit(:title, :priority, :category, :done)
   end
 end
