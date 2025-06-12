@@ -9,20 +9,17 @@ RUN apt-get update -qq && \
     postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Gemfileをコピーしてbundle install
-COPY Gemfile Gemfile.lock ./
+# backendディレクトリのGemfileをコピー
+COPY backend/Gemfile backend/Gemfile.lock ./
 RUN bundle install --deployment --without development test
 
-# アプリケーションコードをコピー
-COPY . .
+# backendのアプリケーションコードをコピー
+COPY backend/ .
 
 # 本番環境用の設定
 ENV RAILS_ENV=production
 ENV RAILS_LOG_TO_STDOUT=true
 ENV RAILS_SERVE_STATIC_FILES=true
-
-# アセットプリコンパイル（必要に応じて）
-# RUN bundle exec rails assets:precompile
 
 EXPOSE 3000
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
