@@ -10,9 +10,6 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # API のルートパス - 簡単なレスポンスを返す
-  root to: proc { [200, { 'Content-Type' => 'application/json' }, ['{"message": "Task API is running", "version": "1.0"}'].to_json] }
-  
-  # または、tasksコントローラーのindexをルートにする場合
-  # root "tasks#index"
-end
+  # Defines the root path route ("/")
+  # root "posts#index"
+  end
