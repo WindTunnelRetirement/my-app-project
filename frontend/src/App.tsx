@@ -11,6 +11,7 @@ interface Task {
   dueDate?: string;
   tags: string[];
   subtasks: { id: number; title: string; done: boolean }[];
+  customOrder?: number; // カスタム順序用
 }
 
 interface Notification {
@@ -21,15 +22,17 @@ interface Notification {
 }
 
 const App = () => {
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('tasks');
-    return saved ? JSON.parse(saved) : [];
+  const [tasks, setTasks] = useState<Task[]>([]);
+  
+  // ダークモード設定を永続化（ローカル変数に変更）
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
   });
   
   const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
-  const [darkMode, setDarkMode] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ status: 'all', priority: null, category: '', search: '' });
   const [sortBy, setSortBy] = useState('priority');
@@ -48,7 +51,7 @@ const App = () => {
     background: darkMode ? '#000000' : '#f2f2f7',
     card: darkMode ? '#1c1c1e' : '#ffffff',
     text: darkMode ? '#ffffff' : '#000000',
-    textSecondary: '#8e8e93',
+    textSecondary: darkMode ? '#8e8e93' : '#8e8e93',
     border: darkMode ? '#38383a' : '#c6c6c8',
     primary: darkMode ? '#0A84FF' : '#007AFF',
     success: darkMode ? '#30D158' : '#34C759',
@@ -57,15 +60,57 @@ const App = () => {
   };
 
   const styles = {
-    input: { width: '100%', padding: '12px', border: `1px solid ${theme.border}`, borderRadius: '8px', backgroundColor: theme.card, color: theme.text, fontSize: '16px', boxSizing: 'border-box' as const, outline: 'none', minHeight: '44px' },
-    button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ padding: '12px 16px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600', minHeight: '44px', backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : theme.textSecondary, color: 'white' }),
-    card: { backgroundColor: theme.card, borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: theme.shadow }
+    input: { 
+      width: '100%', 
+      padding: '12px', 
+      border: `1px solid ${theme.border}`, 
+      borderRadius: '8px', 
+      backgroundColor: theme.card, 
+      color: theme.text, 
+      fontSize: '16px', 
+      boxSizing: 'border-box' as const, 
+      outline: 'none', 
+      minHeight: '44px' 
+    },
+    button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
+      padding: '12px 16px', 
+      border: 'none', 
+      borderRadius: '8px', 
+      cursor: 'pointer', 
+      fontSize: '14px', 
+      fontWeight: '600', 
+      minHeight: '44px', 
+      backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : theme.textSecondary, 
+      color: 'white' 
+    }),
+    card: { 
+      backgroundColor: theme.card, 
+      borderRadius: '12px', 
+      padding: '20px', 
+      marginBottom: '20px', 
+      boxShadow: theme.shadow 
+    }
   };
+
+  // 初期データ読み込み
+  useEffect(() => {
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks));
+    }
+  }, []);
 
   // タスクの永続化
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    if (tasks.length > 0) {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
   }, [tasks]);
+
+  // ダークモード設定の永続化
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   // 通知システム
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -99,7 +144,8 @@ const App = () => {
       updated_at: new Date().toISOString(), 
       dueDate: newTask.dueDate || undefined, 
       tags: newTask.tags.split(',').map(t => t.trim()).filter(Boolean), 
-      subtasks: [] 
+      subtasks: [],
+      customOrder: Date.now() // カスタム順序を設定
     };
     setTasks(prev => [task, ...prev]);
     setNewTask({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
@@ -139,9 +185,23 @@ const App = () => {
       const newTasks = [...prev];
       const [draggedItem] = newTasks.splice(draggedIndex, 1);
       newTasks.splice(targetIndex, 0, draggedItem);
-      return newTasks;
+      
+      // カスタム順序を更新
+      const updatedTasks = newTasks.map((task, index) => ({
+        ...task,
+        customOrder: Date.now() + index
+      }));
+      
+      return updatedTasks;
     });
-    addNotification('info', 'タスクを移動しました');
+    
+    // ドラッグ&ドロップした場合は自動的にカスタム順序に切り替え
+    if (sortBy !== 'custom') {
+      setSortBy('custom');
+      addNotification('info', 'カスタム順序に切り替えました');
+    } else {
+      addNotification('info', 'タスクを移動しました');
+    }
   };
 
   const addSubtask = (taskId: number, subtaskTitle: string) => {
@@ -189,6 +249,9 @@ const App = () => {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (sortBy === 'custom') {
+        return (a.customOrder || 0) - (b.customOrder || 0);
       }
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
@@ -268,7 +331,7 @@ const App = () => {
               )}
             </select>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={styles.input}>
-              {[['priority', '優先度順'], ['created_at', '作成日順'], ['dueDate', '期限順']].map(([value, label]) => 
+              {[['priority', '優先度順'], ['created_at', '作成日順'], ['dueDate', '期限順'], ['custom', 'カスタム順序']].map(([value, label]) => 
                 <option key={value} value={value}>{label}</option>
               )}
             </select>
@@ -276,6 +339,11 @@ const App = () => {
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
             <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} />完了済みを表示
           </label>
+          {sortBy !== 'custom' && (
+            <div style={{ marginTop: '8px', padding: '8px', backgroundColor: theme.border, borderRadius: '4px', fontSize: '12px', color: theme.textSecondary }}>
+              💡 ヒント: タスクをドラッグ&ドロップすると自動的にカスタム順序に切り替わります
+            </div>
+          )}
         </div>
       )}
 
@@ -322,7 +390,8 @@ const App = () => {
                  borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
                  boxShadow: theme.shadow, 
                  cursor: 'grab', 
-                 opacity: draggedTask === task.id ? 0.5 : 1 
+                 opacity: draggedTask === task.id ? 0.5 : 1,
+                 transition: 'all 0.2s ease'
                }}>
             
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
