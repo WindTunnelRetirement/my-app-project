@@ -14,7 +14,11 @@ type FilterStatus = 'all' | 'completed' | 'pending';
 type SortBy = 'priority' | 'created_at';
 
 function App(): JSX.Element {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: 1, title: "プロジェクトの企画書を作成", done: false, priority: 1, category: "work", created_at: "2024-01-01", updated_at: "2024-01-01" },
+    { id: 2, title: "牛乳を買いに行く", done: true, priority: 3, category: "shopping", created_at: "2024-01-02", updated_at: "2024-01-02" },
+    { id: 3, title: "ジムで運動する", done: false, priority: 2, category: "health", created_at: "2024-01-03", updated_at: "2024-01-03" }
+  ]);
   const [title, setTitle] = useState<string>('');
   const [priority, setPriority] = useState<number>(2);
   const [category, setCategory] = useState<string>('general');
@@ -22,19 +26,15 @@ function App(): JSX.Element {
   const [editingTitle, setEditingTitle] = useState<string>('');
   const [editingPriority, setEditingPriority] = useState<number>(2);
   const [editingCategory, setEditingCategory] = useState<string>('general');
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
   
   // フィルター状態
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [filterPriority, setFilterPriority] = useState<number | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortBy>('priority');
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
   const priorityConfig = {
     1: { name: '高', color: '#ff4757', emoji: '🔥' },
@@ -50,50 +50,34 @@ function App(): JSX.Element {
     health: { name: '健康', color: '#00cec9', emoji: '💪' }
   };
 
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    document.body.style.backgroundColor = darkMode ? '#1a1a1a' : '#ffffff';
-  }, [darkMode]);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [filterStatus, filterPriority, filterCategory, sortBy]);
-
-  const fetchTasks = () => {
-    const params = new URLSearchParams();
-    if (filterStatus !== 'all') params.append('status', filterStatus);
-    if (filterPriority) params.append('priority', filterPriority.toString());
-    if (filterCategory) params.append('category', filterCategory);
-    params.append('sort', sortBy);
-
-    const url = `${API_URL}/tasks${params.toString() ? `?${params.toString()}` : ''}`;
-    
-    fetch(url)
-      .then(res => res.json())
-      .then((data: Task[]) => setTasks(data))
-      .catch(err => console.error(err));
-  };
-
   const theme = {
     light: {
-      background: '#ffffff',
-      cardBackground: '#f8f9fa',
+      background: '#f2f2f7',
+      cardBackground: '#ffffff',
       text: '#000000',
-      textSecondary: '#6c757d',
-      border: '#e9ecef',
-      inputBorder: '#ccc',
-      shadow: '0 2px 4px rgba(0,0,0,0.1)',
-      filterBackground: '#ffffff'
+      textSecondary: '#8e8e93',
+      border: '#c6c6c8',
+      inputBorder: '#c6c6c8',
+      shadow: '0 1px 3px rgba(0,0,0,0.1)',
+      filterBackground: '#ffffff',
+      primaryColor: '#007AFF',
+      successColor: '#34C759',
+      destructiveColor: '#FF3B30',
+      titleColor: '#007AFF'
     },
     dark: {
-      background: '#1a1a1a',
-      cardBackground: '#2d2d2d',
+      background: '#000000',
+      cardBackground: '#1c1c1e',
       text: '#ffffff',
-      textSecondary: '#a0a0a0',
-      border: '#404040',
-      inputBorder: '#555',
-      shadow: '0 2px 4px rgba(0,0,0,0.3)',
-      filterBackground: '#2d2d2d'
+      textSecondary: '#8e8e93',
+      border: '#38383a',
+      inputBorder: '#38383a',
+      shadow: '0 1px 3px rgba(0,0,0,0.3)',
+      filterBackground: '#1c1c1e',
+      primaryColor: '#0A84FF',
+      successColor: '#30D158',
+      destructiveColor: '#FF453A',
+      titleColor: '#0A84FF'
     }
   };
 
@@ -102,56 +86,35 @@ function App(): JSX.Element {
   const addTask = (): void => {
     if (!title.trim()) return;
     
-    fetch(`${API_URL}/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        task: { 
-          title, 
-          priority, 
-          category 
-        } 
-      })
-    })
-      .then(res => res.json())
-      .then((newTask: Task) => {
-        setTasks([newTask, ...tasks]);
-        setTitle('');
-        setPriority(2);
-        setCategory('general');
-      })
-      .catch(err => console.error(err));
+    const newTask: Task = {
+      id: Date.now(),
+      title,
+      done: false,
+      priority,
+      category,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    setTasks([newTask, ...tasks]);
+    setTitle('');
+    setPriority(2);
+    setCategory('general');
   };
 
   const deleteTask = (id: number): void => {
     setDeletingId(id);
     
     setTimeout(() => {
-      fetch(`${API_URL}/tasks/${id}`, {
-        method: 'DELETE'
-      })
-        .then(() => {
-          setTasks(tasks.filter(task => task.id !== id));
-          setDeletingId(null);
-        })
-        .catch(err => {
-          console.error(err);
-          setDeletingId(null);
-        });
+      setTasks(tasks.filter(task => task.id !== id));
+      setDeletingId(null);
     }, 300);
   };
 
   const toggleTask = (id: number): void => {
-    fetch(`${API_URL}/tasks/${id}/toggle`, {
-      method: 'PATCH'
-    })
-      .then(res => res.json())
-      .then((updatedTask: Task) => {
-        setTasks(tasks.map(task => 
-          task.id === id ? updatedTask : task
-        ));
-      })
-      .catch(err => console.error(err));
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, done: !task.done } : task
+    ));
   };
 
   const startEditing = (task: Task): void => {
@@ -164,28 +127,20 @@ function App(): JSX.Element {
   const saveEdit = (id: number): void => {
     if (!editingTitle.trim()) return;
     
-    fetch(`${API_URL}/tasks/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        task: { 
-          title: editingTitle,
-          priority: editingPriority,
-          category: editingCategory
-        } 
-      })
-    })
-      .then(res => res.json())
-      .then((updatedTask: Task) => {
-        setTasks(tasks.map(task => 
-          task.id === id ? updatedTask : task
-        ));
-        setEditingId(null);
-        setEditingTitle('');
-        setEditingPriority(2);
-        setEditingCategory('general');
-      })
-      .catch(err => console.error(err));
+    setTasks(tasks.map(task => 
+      task.id === id ? { 
+        ...task, 
+        title: editingTitle,
+        priority: editingPriority,
+        category: editingCategory,
+        updated_at: new Date().toISOString()
+      } : task
+    ));
+    
+    setEditingId(null);
+    setEditingTitle('');
+    setEditingPriority(2);
+    setEditingCategory('general');
   };
 
   const cancelEdit = (): void => {
@@ -210,299 +165,285 @@ function App(): JSX.Element {
   };
 
   const getPriorityColor = (priority: number): string => {
-    return priorityConfig[priority as keyof typeof priorityConfig]?.color || '#6c757d';
+    return priorityConfig[priority as keyof typeof priorityConfig]?.color || '#8e8e93';
   };
 
   const getCategoryColor = (category: string): string => {
     return categoryConfig[category as keyof typeof categoryConfig]?.color || '#6c5ce7';
   };
 
-  // スタイル定義
-  const appStyles: React.CSSProperties = {
-    padding: '20px',
-    maxWidth: '800px',
-    margin: '0 auto',
-    backgroundColor: currentTheme.background,
-    color: currentTheme.text,
-    minHeight: '100vh',
-    transition: 'all 0.3s ease',
-  };
-
-  const headerStyles: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
-  };
-
-  const titleStyles: React.CSSProperties = {
-    margin: 0,
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: darkMode ? '#8b5cf6' : '#3b82f6',
-    textShadow: darkMode 
-      ? '0 0 20px rgba(139, 92, 246, 0.3)'
-      : '0 0 20px rgba(59, 130, 246, 0.3)',
-  };
-
-  const darkModeButtonStyles: React.CSSProperties = {
-    padding: '10px',
-    backgroundColor: 'transparent',
-    border: `2px solid ${currentTheme.border}`,
-    borderRadius: '50%',
-    cursor: 'pointer',
-    fontSize: '1.2rem',
-    transition: 'all 0.3s ease',
-    color: currentTheme.text,
-  };
-
-  const filterContainerStyles: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '12px',
-    padding: '20px',
-    backgroundColor: currentTheme.filterBackground,
-    borderRadius: '12px',
-    border: `1px solid ${currentTheme.border}`,
-    marginBottom: '24px',
-    boxShadow: currentTheme.shadow,
-  };
-
-  const selectStyles: React.CSSProperties = {
-    padding: '8px 12px',
-    borderRadius: '8px',
-    border: `1px solid ${currentTheme.inputBorder}`,
-    backgroundColor: currentTheme.background,
-    color: currentTheme.text,
-    fontSize: '14px',
-    cursor: 'pointer',
-  };
-
-  const inputContainerStyles: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr auto auto auto',
-    gap: '12px',
-    marginBottom: '30px',
-    animation: 'fadeInUp 0.5s ease-out',
-  };
-
-  const inputStyles: React.CSSProperties = {
-    padding: '12px 16px',
-    border: `2px solid ${currentTheme.inputBorder}`,
-    borderRadius: '8px',
-    fontSize: '16px',
-    backgroundColor: currentTheme.background,
-    color: currentTheme.text,
-    transition: 'all 0.3s ease',
-    outline: 'none',
-  };
-
-  const addButtonStyles: React.CSSProperties = {
-    padding: '12px 24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    transition: 'all 0.3s ease',
-    transform: 'translateY(0)',
-  };
-
-  const getTaskItemStyles = (task: Task): React.CSSProperties => ({
-    display: 'flex',
-    alignItems: 'center',
-    padding: '20px',
-    margin: '12px 0',
-    backgroundColor: currentTheme.cardBackground,
-    borderRadius: '12px',
-    border: `1px solid ${currentTheme.border}`,
-    borderLeft: `4px solid ${getPriorityColor(task.priority)}`,
-    boxShadow: currentTheme.shadow,
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    transform: deletingId === task.id ? 'translateX(-100%) scale(0.8)' : 'translateX(0) scale(1)',
-    opacity: deletingId === task.id ? 0 : 1,
-    animation: 'fadeInUp 0.4s ease-out',
+  // フィルタリング処理
+  const filteredTasks = tasks.filter(task => {
+    if (filterStatus === 'completed' && !task.done) return false;
+    if (filterStatus === 'pending' && task.done) return false;
+    if (filterPriority && task.priority !== filterPriority) return false;
+    if (filterCategory && task.category !== filterCategory) return false;
+    return true;
+  }).sort((a, b) => {
+    if (sortBy === 'priority') {
+      return a.priority - b.priority;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
-
-  const priorityBadgeStyles = (priority: number): React.CSSProperties => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 8px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    backgroundColor: getPriorityColor(priority),
-    color: 'white',
-    marginRight: '8px',
-  });
-
-  const categoryBadgeStyles = (category: string): React.CSSProperties => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 8px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    backgroundColor: getCategoryColor(category),
-    color: 'white',
-    marginRight: '12px',
-  });
-
-  const animationStyles = `
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .add-button:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
-    }
-
-    .task-item:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 8px 25px rgba(0,0,0,${darkMode ? '0.3' : '0.15'}) !important;
-    }
-
-    .delete-button:hover {
-      transform: scale(1.05) !important;
-      background-color: #ff3838 !important;
-    }
-
-    .dark-mode-button:hover {
-      transform: rotate(180deg) !important;
-      border-color: #667eea !important;
-    }
-
-    .task-input:focus {
-      border-color: #667eea !important;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-    }
-  `;
 
   const completedCount = tasks.filter(task => task.done).length;
   const totalCount = tasks.length;
 
   return (
-    <>
-      <style>{animationStyles}</style>
-      <div style={appStyles}>
-        <div style={headerStyles}>
-          <h1 style={titleStyles}>✨ タスク一覧</h1>
+    <div style={{
+      backgroundColor: currentTheme.background,
+      color: currentTheme.text,
+      minHeight: '100vh',
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      paddingLeft: 'max(16px, env(safe-area-inset-left))',
+      paddingRight: 'max(16px, env(safe-area-inset-right))',
+      transition: 'all 0.3s ease',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }}>
+      {/* ヘッダー */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '20px 0',
+        borderBottom: `1px solid ${currentTheme.border}`,
+        marginBottom: '20px',
+        position: 'sticky',
+        top: 0,
+        backgroundColor: currentTheme.background,
+        zIndex: 10,
+      }}>
+        <h1 style={{
+          margin: 0,
+          fontSize: '28px',
+          fontWeight: '700',
+          color: currentTheme.titleColor,
+          textShadow: darkMode ? '0 0 10px rgba(10, 132, 255, 0.3)' : '0 0 10px rgba(0, 122, 255, 0.2)',
+        }}>
+          ✨ タスク
+        </h1>
+        
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
-            className="dark-mode-button"
-            style={darkModeButtonStyles}
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              padding: '12px',
+              backgroundColor: showFilters ? currentTheme.primaryColor : 'transparent',
+              border: `2px solid ${currentTheme.border}`,
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              color: showFilters ? 'white' : currentTheme.text,
+              transition: 'all 0.3s ease',
+              minWidth: '44px',
+              minHeight: '44px',
+            }}
+          >
+            🔍
+          </button>
+          
+          <button
             onClick={() => setDarkMode(!darkMode)}
-            title={darkMode ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+            style={{
+              padding: '12px',
+              backgroundColor: 'transparent',
+              border: `2px solid ${currentTheme.border}`,
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              color: currentTheme.text,
+              transition: 'all 0.3s ease',
+              minWidth: '44px',
+              minHeight: '44px',
+            }}
           >
             {darkMode ? '☀️' : '🌙'}
           </button>
         </div>
+      </div>
 
-        {/* 進捗表示 */}
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <div style={{ 
-            fontSize: '18px', 
-            fontWeight: 'bold', 
-            marginBottom: '8px',
-            color: currentTheme.text 
-          }}>
-            進捗: {completedCount}/{totalCount} 完了
-          </div>
+      {/* 進捗表示 */}
+      <div style={{
+        padding: '20px',
+        backgroundColor: currentTheme.cardBackground,
+        borderRadius: '16px',
+        marginBottom: '20px',
+        border: `1px solid ${currentTheme.border}`,
+        boxShadow: currentTheme.shadow,
+      }}>
+        <div style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          marginBottom: '12px',
+          textAlign: 'center',
+        }}>
+          進捗: {completedCount}/{totalCount} 完了
+        </div>
+        <div style={{
+          width: '100%',
+          height: '8px',
+          backgroundColor: currentTheme.border,
+          borderRadius: '4px',
+          overflow: 'hidden'
+        }}>
           <div style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: currentTheme.border,
+            width: `${totalCount ? (completedCount / totalCount) * 100 : 0}%`,
+            height: '100%',
+            backgroundColor: currentTheme.successColor,
+            transition: 'width 0.3s ease',
             borderRadius: '4px',
-            overflow: 'hidden'
+          }} />
+        </div>
+      </div>
+
+      {/* フィルター (モバイル対応) */}
+      {showFilters && (
+        <div style={{
+          backgroundColor: currentTheme.cardBackground,
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '20px',
+          border: `1px solid ${currentTheme.border}`,
+          boxShadow: currentTheme.shadow,
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            marginBottom: '16px',
           }}>
-            <div style={{
-              width: `${totalCount ? (completedCount / totalCount) * 100 : 0}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)',
-              transition: 'width 0.3s ease'
-            }} />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
+              style={{
+                padding: '12px',
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                backgroundColor: currentTheme.background,
+                color: currentTheme.text,
+                fontSize: '16px',
+                minHeight: '44px',
+              }}
+            >
+              <option value="all">すべて</option>
+              <option value="pending">未完了</option>
+              <option value="completed">完了済み</option>
+            </select>
+
+            <select
+              value={filterPriority || ''}
+              onChange={(e) => setFilterPriority(e.target.value ? Number(e.target.value) : null)}
+              style={{
+                padding: '12px',
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                backgroundColor: currentTheme.background,
+                color: currentTheme.text,
+                fontSize: '16px',
+                minHeight: '44px',
+              }}
+            >
+              <option value="">全優先度</option>
+              <option value="1">🔥 高</option>
+              <option value="2">⚡ 中</option>
+              <option value="3">💫 低</option>
+            </select>
+          </div>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+          }}>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              style={{
+                padding: '12px',
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                backgroundColor: currentTheme.background,
+                color: currentTheme.text,
+                fontSize: '16px',
+                minHeight: '44px',
+              }}
+            >
+              <option value="">全カテゴリ</option>
+              {Object.entries(categoryConfig).map(([key, config]) => (
+                <option key={key} value={key}>
+                  {config.emoji} {config.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              style={{
+                padding: '12px',
+                borderRadius: '12px',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                backgroundColor: currentTheme.background,
+                color: currentTheme.text,
+                fontSize: '16px',
+                minHeight: '44px',
+              }}
+            >
+              <option value="priority">優先度順</option>
+              <option value="created_at">作成日順</option>
+            </select>
           </div>
         </div>
-
-        {/* フィルター */}
-        <div style={filterContainerStyles}>
-          <label style={{ fontSize: '14px', fontWeight: 'bold' }}>🔍 フィルター:</label>
-          
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            style={selectStyles}
-          >
-            <option value="all">すべて</option>
-            <option value="pending">未完了</option>
-            <option value="completed">完了済み</option>
-          </select>
-
-          <select
-            value={filterPriority || ''}
-            onChange={(e) => setFilterPriority(e.target.value ? Number(e.target.value) : null)}
-            style={selectStyles}
-          >
-            <option value="">全優先度</option>
-            <option value="1">🔥 高</option>
-            <option value="2">⚡ 中</option>
-            <option value="3">💫 低</option>
-          </select>
-
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            style={selectStyles}
-          >
-            <option value="">全カテゴリ</option>
-            {Object.entries(categoryConfig).map(([key, config]) => (
-              <option key={key} value={key}>
-                {config.emoji} {config.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            style={selectStyles}
-          >
-            <option value="priority">優先度順</option>
-            <option value="created_at">作成日順</option>
-          </select>
-        </div>
+      )}
+      
+      {/* タスク追加フォーム (モバイル最適化) */}
+      <div style={{
+        backgroundColor: currentTheme.cardBackground,
+        borderRadius: '16px',
+        padding: '20px',
+        marginBottom: '20px',
+        border: `1px solid ${currentTheme.border}`,
+        boxShadow: currentTheme.shadow,
+      }}>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="新しいタスクを入力..."
+          onKeyPress={handleKeyPress}
+          style={{
+            width: '100%',
+            padding: '16px',
+            border: `2px solid ${currentTheme.inputBorder}`,
+            borderRadius: '12px',
+            fontSize: '17px',
+            backgroundColor: currentTheme.background,
+            color: currentTheme.text,
+            outline: 'none',
+            marginBottom: '12px',
+            minHeight: '44px',
+            boxSizing: 'border-box',
+          }}
+        />
         
-        {/* タスク追加フォーム */}
-        <div style={inputContainerStyles}>
-          <input
-            className="task-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="新しいタスクを入力..."
-            onKeyPress={handleKeyPress}
-            style={inputStyles}
-          />
-          
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '12px',
+          marginBottom: '16px',
+        }}>
           <select
             value={priority}
             onChange={(e) => setPriority(Number(e.target.value))}
-            style={{ ...selectStyles, ...inputStyles }}
+            style={{
+              padding: '12px',
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.inputBorder}`,
+              backgroundColor: currentTheme.background,
+              color: currentTheme.text,
+              fontSize: '16px',
+              minHeight: '44px',
+            }}
           >
             <option value={1}>🔥 高</option>
             <option value={2}>⚡ 中</option>
@@ -512,7 +453,15 @@ function App(): JSX.Element {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            style={{ ...selectStyles, ...inputStyles }}
+            style={{
+              padding: '12px',
+              borderRadius: '12px',
+              border: `1px solid ${currentTheme.inputBorder}`,
+              backgroundColor: currentTheme.background,
+              color: currentTheme.text,
+              fontSize: '16px',
+              minHeight: '44px',
+            }}
           >
             {Object.entries(categoryConfig).map(([key, config]) => (
               <option key={key} value={key}>
@@ -520,51 +469,109 @@ function App(): JSX.Element {
               </option>
             ))}
           </select>
-
-          <button 
-            className="add-button"
-            onClick={addTask}
-            style={addButtonStyles}
-          >
-            ➕ 追加
-          </button>
         </div>
 
-        {/* タスクリスト */}
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {tasks.map((task: Task) => (
-            <li 
-              key={task.id} 
-              className="task-item"
-              style={getTaskItemStyles(task)}
-            >
-              <input
-                type="checkbox"
-                checked={task.done || false}
-                onChange={() => toggleTask(task.id)}
-                style={{ 
-                  width: '20px', 
-                  height: '20px', 
-                  marginRight: '12px', 
-                  cursor: 'pointer', 
-                  accentColor: getPriorityColor(task.priority) 
+        <button 
+          onClick={addTask}
+          disabled={!title.trim()}
+          style={{
+            width: '100%',
+            padding: '16px',
+            backgroundColor: title.trim() ? currentTheme.primaryColor : currentTheme.border,
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '17px',
+            fontWeight: '600',
+            cursor: title.trim() ? 'pointer' : 'not-allowed',
+            transition: 'all 0.3s ease',
+            minHeight: '50px',
+          }}
+        >
+          ➕ タスクを追加
+        </button>
+      </div>
+
+      {/* タスクリスト */}
+      <div>
+        {filteredTasks.map((task: Task) => (
+          <div 
+            key={task.id}
+            style={{
+              backgroundColor: currentTheme.cardBackground,
+              borderRadius: '16px',
+              padding: '20px',
+              marginBottom: '12px',
+              border: `1px solid ${currentTheme.border}`,
+              borderLeft: `4px solid ${getPriorityColor(task.priority)}`,
+              boxShadow: currentTheme.shadow,
+              transition: 'all 0.3s ease',
+              transform: deletingId === task.id ? 'translateX(-100%)' : 'translateX(0)',
+              opacity: deletingId === task.id ? 0 : 1,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              <button
+                onClick={() => toggleTask(task.id)}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  border: `2px solid ${task.done ? currentTheme.successColor : currentTheme.border}`,
+                  backgroundColor: task.done ? currentTheme.successColor : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  flexShrink: 0,
+                  marginTop: '2px',
+                  minWidth: '44px',
+                  minHeight: '44px',
                 }}
-              />
+              >
+                {task.done && '✓'}
+              </button>
               
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={priorityBadgeStyles(task.priority)}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap',
+                  gap: '8px', 
+                  marginBottom: '12px' 
+                }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: getPriorityColor(task.priority),
+                    color: 'white',
+                  }}>
                     {priorityConfig[task.priority as keyof typeof priorityConfig]?.emoji}
                     {priorityConfig[task.priority as keyof typeof priorityConfig]?.name}
                   </span>
-                  <span style={categoryBadgeStyles(task.category)}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: getCategoryColor(task.category),
+                    color: 'white',
+                  }}>
                     {categoryConfig[task.category as keyof typeof categoryConfig]?.emoji}
                     {categoryConfig[task.category as keyof typeof categoryConfig]?.name}
                   </span>
                 </div>
                 
                 {editingId === task.id ? (
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ marginBottom: '12px' }}>
                     <input
                       value={editingTitle}
                       onChange={(e) => setEditingTitle(e.target.value)}
@@ -572,95 +579,161 @@ function App(): JSX.Element {
                       onBlur={() => saveEdit(task.id)}
                       autoFocus
                       style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        border: '2px solid #667eea',
-                        borderRadius: '6px',
-                        fontSize: '16px',
+                        width: '100%',
+                        padding: '12px',
+                        border: `2px solid ${currentTheme.primaryColor}`,
+                        borderRadius: '8px',
+                        fontSize: '17px',
                         backgroundColor: currentTheme.background,
                         color: currentTheme.text,
                         outline: 'none',
+                        marginBottom: '8px',
+                        boxSizing: 'border-box',
                       }}
                     />
-                    <select
-                      value={editingPriority}
-                      onChange={(e) => setEditingPriority(Number(e.target.value))}
-                      style={{ ...selectStyles, padding: '6px' }}
-                    >
-                      <option value={1}>🔥 高</option>
-                      <option value={2}>⚡ 中</option>
-                      <option value={3}>💫 低</option>
-                    </select>
-                    <select
-                      value={editingCategory}
-                      onChange={(e) => setEditingCategory(e.target.value)}
-                      style={{ ...selectStyles, padding: '6px' }}
-                    >
-                      {Object.entries(categoryConfig).map(([key, config]) => (
-                        <option key={key} value={key}>
-                          {config.emoji} {config.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '8px',
+                    }}>
+                      <select
+                        value={editingPriority}
+                        onChange={(e) => setEditingPriority(Number(e.target.value))}
+                        style={{
+                          padding: '8px',
+                          borderRadius: '6px',
+                          border: `1px solid ${currentTheme.inputBorder}`,
+                          backgroundColor: currentTheme.background,
+                          color: currentTheme.text,
+                          fontSize: '14px',
+                        }}
+                      >
+                        <option value={1}>🔥 高</option>
+                        <option value={2}>⚡ 中</option>
+                        <option value={3}>💫 低</option>
+                      </select>
+                      <select
+                        value={editingCategory}
+                        onChange={(e) => setEditingCategory(e.target.value)}
+                        style={{
+                          padding: '8px',
+                          borderRadius: '6px',
+                          border: `1px solid ${currentTheme.inputBorder}`,
+                          backgroundColor: currentTheme.background,
+                          color: currentTheme.text,
+                          fontSize: '14px',
+                        }}
+                      >
+                        {Object.entries(categoryConfig).map(([key, config]) => (
+                          <option key={key} value={key}>
+                            {config.emoji} {config.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 ) : (
-                  <span 
+                  <div 
                     onClick={() => startEditing(task)}
                     style={{ 
+                      fontSize: '17px',
+                      fontWeight: task.done ? '400' : '500',
                       textDecoration: task.done ? 'line-through' : 'none',
                       color: task.done ? currentTheme.textSecondary : currentTheme.text,
                       cursor: 'pointer',
-                      fontSize: '16px',
-                      fontWeight: task.done ? 'normal' : '500',
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      marginBottom: '12px',
+                      lineHeight: '1.4',
+                      wordBreak: 'break-word',
+                      minHeight: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
                     }}
                   >
                     {task.title}
-                  </span>
+                  </div>
                 )}
+                
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => saveEdit(task.id)}
+                    style={{
+                      display: editingId === task.id ? 'block' : 'none',
+                      padding: '8px 16px',
+                      backgroundColor: currentTheme.successColor,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      minHeight: '36px',
+                    }}
+                  >
+                    保存
+                  </button>
+                  <button
+                    onClick={() => cancelEdit()}
+                    style={{
+                      display: editingId === task.id ? 'block' : 'none',
+                      padding: '8px 16px',
+                      backgroundColor: currentTheme.textSecondary,
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      minHeight: '36px',
+                    }}
+                  >
+                    キャンセル
+                  </button>
+                </div>
               </div>
               
               <button
-                className="delete-button"
                 onClick={() => deleteTask(task.id)}
                 style={{
-                  marginLeft: '12px',
-                  padding: '8px 12px',
-                  backgroundColor: '#ff4757',
+                  padding: '12px',
+                  backgroundColor: currentTheme.destructiveColor,
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
+                  fontSize: '16px',
                   transition: 'all 0.3s ease',
-                  transform: 'scale(1)',
+                  flexShrink: 0,
+                  minWidth: '44px',
+                  minHeight: '44px',
                 }}
                 disabled={deletingId === task.id}
               >
-                🗑️ 削除
+                🗑️
               </button>
-            </li>
-          ))}
-        </ul>
-
-        {tasks.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            color: currentTheme.textSecondary,
-            fontSize: '18px',
-            marginTop: '60px',
-            animation: 'fadeIn 0.5s ease-out',
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
-            <p>タスクがありません</p>
-            <p style={{ fontSize: '14px', opacity: 0.7 }}>
-              上の入力フィールドから新しいタスクを追加してください
-            </p>
+            </div>
           </div>
-        )}
+        ))}
       </div>
-    </>
+
+      {filteredTasks.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          color: currentTheme.textSecondary,
+          fontSize: '17px',
+          marginTop: '60px',
+          padding: '40px 20px',
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>📝</div>
+          <p style={{ margin: '0 0 8px 0', fontWeight: '500' }}>
+            {tasks.length === 0 ? 'タスクがありません' : 'フィルター条件に一致するタスクがありません'}
+          </p>
+          <p style={{ fontSize: '15px', opacity: 0.7, margin: 0 }}>
+            {tasks.length === 0 ? '新しいタスクを追加してください' : 'フィルターを変更してみてください'}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
