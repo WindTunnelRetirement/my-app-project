@@ -295,7 +295,7 @@ const App = () => {
 
       {/* ヘッダー */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '20px 0', borderBottom: `1px solid ${theme.border}` }}>
-        <h1 style={{ margin: 0, color: theme.primary, fontSize: '28px' }}>✨ タスク</h1>
+        <h1 style={{ margin: 0, color: theme.primary, fontSize: '28px' }}>✅ Tasks</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
             { icon: '🔍', action: () => setShowFilters(!showFilters) },
