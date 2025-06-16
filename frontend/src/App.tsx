@@ -251,7 +251,7 @@ const handleTouchEnd = (e, targetTaskId) => {
     moveTask(touchState.draggedTaskId, targetTaskId);
     addNotification('success', 'タスクを移動しました！');
   }
-  
+
   // 状態をリセット
   setTouchState({
     startX: 0,
@@ -464,6 +464,7 @@ const handleTouchEnd = (e, targetTaskId) => {
       <div>
         {filteredTasks.map(task => (
           <div key={task.id} 
+               data-taskid={task.id}
                draggable 
                onDragStart={(e) => handleDragStart(e, task.id)} 
                onDragOver={(e) => e.preventDefault()} 
@@ -471,7 +472,7 @@ const handleTouchEnd = (e, targetTaskId) => {
                onDragEnd={() => setDraggedTask(null)}
                onTouchStart={(e) => handleTouchStart(e, task.id)}
                onTouchMove={handleTouchMove}
-               onTouchEnd={(e) => handleTouchEnd(e, task.id)}
+               onTouchEnd={handleTouchEnd}
                style={{ 
                   backgroundColor: theme.card, 
                   borderRadius: '12px', 
