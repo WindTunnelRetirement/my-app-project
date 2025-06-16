@@ -189,7 +189,9 @@ const App = () => {
 
   // モバイル用タッチイベント
 const handleTouchStart = (e, taskId) => {
-  e.preventDefault();
+  // 編集モードの場合はドラッグを無効にする
+  if (editingId === taskId) return;
+  
   const touch = e.touches[0];
   
   // 長押しタイマーを設定
@@ -223,8 +225,8 @@ const handleTouchMove = (e) => {
   const deltaX = Math.abs(touch.clientX - touchState.startX);
   const deltaY = Math.abs(touch.clientY - touchState.startY);
   
-  // 一定距離移動したら長押しタイマーをキャンセル
-  if ((deltaX > 10 || deltaY > 10) && touchState.longPressTimer) {
+  // ドラッグ中でない場合のみ、一定距離移動したら長押しタイマーをキャンセル
+  if (!touchState.isDragging && (deltaX > 15 || deltaY > 15) && touchState.longPressTimer) {
     clearTimeout(touchState.longPressTimer);
     setTouchState(prev => ({ ...prev, longPressTimer: null }));
   }
@@ -236,25 +238,18 @@ const handleTouchMove = (e) => {
   }));
 };
 
-const handleTouchEnd = (e) => {
-  e.preventDefault();
-
+const handleTouchEnd = (e, targetTaskId) => {
   // タイマーをクリア
   if (touchState.longPressTimer) {
     clearTimeout(touchState.longPressTimer);
   }
-
-  // タッチ位置の要素を取得
-  const targetElem = document.elementFromPoint(touchState.currentX, touchState.currentY);
-  const targetTaskId = targetElem?.getAttribute('data-taskid');
-
-  if (
-    touchState.isDragging &&
-    touchState.draggedTaskId &&
-    targetTaskId &&
-    targetTaskId !== touchState.draggedTaskId
-  ) {
+  
+  // ドラッグ中で、異なるタスクにタッチした場合は移動
+  if (touchState.isDragging && touchState.draggedTaskId && touchState.draggedTaskId !== targetTaskId) {
+    e.preventDefault();
+    e.stopPropagation();
     moveTask(touchState.draggedTaskId, targetTaskId);
+    addNotification('success', 'タスクを移動しました！');
   }
 
   // 状態をリセット
@@ -427,6 +422,18 @@ const handleTouchEnd = (e) => {
         </div>
       )}
 
+      {touchState.isDragging && (
+        <div style={{ 
+          ...styles.card, 
+          backgroundColor: theme.primary, 
+          color: 'white', 
+          textAlign: 'center',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          🎯 移動先のタスクをタップしてください
+        </div>
+      )}
+
       {/* 一括操作 */}
       {bulkMode && selectedTasks.size > 0 && (
         <div style={{ ...styles.card, display: 'flex', gap: '8px' }}>
@@ -467,18 +474,19 @@ const handleTouchEnd = (e) => {
                onTouchMove={handleTouchMove}
                onTouchEnd={handleTouchEnd}
                style={{ 
-                 backgroundColor: theme.card, 
-                 borderRadius: '12px', 
-                 padding: '16px', 
-                 marginBottom: '12px', 
-                 borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
-                 boxShadow: theme.shadow, 
-                 cursor: 'grab', 
-                 opacity: touchState.draggedTaskId === task.id ? 0.7 : 1,
-                 transform: touchState.draggedTaskId === task.id ? 'scale(1.05)' : 'scale(1)',
-                 border: touchState.draggedTaskId === task.id ? `2px solid ${theme.primary}` : 'none',
-                 touchAction: 'none',
-                 userSelect: 'none'
+                  backgroundColor: theme.card, 
+                  borderRadius: '12px', 
+                  padding: '16px', 
+                  marginBottom: '12px', 
+                  borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
+                  boxShadow: theme.shadow, 
+                  cursor: 'grab', 
+                  opacity: touchState.draggedTaskId === task.id ? 0.5 : 1,
+                  transform: touchState.draggedTaskId === task.id ? 'scale(1.02)' : 'scale(1)',
+                  border: touchState.isDragging ? (touchState.draggedTaskId === task.id ? `3px solid ${theme.success}` : `2px dashed ${theme.primary}`) : 'none',
+                  touchAction: 'manipulation',
+                  userSelect: 'none',
+                  transition: 'all 0.2s ease'
                }}>
             
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -558,6 +566,10 @@ const handleTouchEnd = (e) => {
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
         * {
           -webkit-user-select: none;
