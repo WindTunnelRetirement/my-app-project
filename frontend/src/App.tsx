@@ -10,8 +10,7 @@ interface Task {
   updated_at: string;
   dueDate?: string;
   tags: string[];
-  subtasks: { id: number; title: string; done: boolean }[];
-  customOrder?: number; // カスタム順序用
+  customOrder?: number;
 }
 
 interface Notification {
@@ -29,7 +28,7 @@ const App = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
-  
+
   const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
@@ -41,6 +40,8 @@ const App = () => {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const configs = {
     priority: { 1: { name: '高', color: '#ff4757', emoji: '🔥' }, 2: { name: '中', color: '#ffa502', emoji: '⚡' }, 3: { name: '低', color: '#5352ed', emoji: '💫' } },
@@ -112,7 +113,6 @@ const App = () => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // 通知システム
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Date.now();
     setNotifications(prev => [...prev, { id, type, message, timestamp: id }]);
@@ -144,8 +144,7 @@ const App = () => {
       updated_at: new Date().toISOString(), 
       dueDate: newTask.dueDate || undefined, 
       tags: newTask.tags.split(',').map(t => t.trim()).filter(Boolean), 
-      subtasks: [],
-      customOrder: Date.now() // カスタム順序を設定
+      customOrder: Date.now()
     };
     setTasks(prev => [task, ...prev]);
     setNewTask({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
@@ -168,6 +167,7 @@ const App = () => {
     addNotification('success', 'タスクを更新しました！');
   };
 
+  // デスクトップ用ドラッグ&ドロップ
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
     setDraggedTask(taskId);
     e.dataTransfer.effectAllowed = 'move';
@@ -175,10 +175,46 @@ const App = () => {
 
   const handleDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedTask || draggedTask === targetId) return;
+    moveTask(draggedTask, targetId);
+  };
+
+  // モバイル用タッチイベント
+  const handleTouchStart = (e: React.TouchEvent, taskId: number) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY, time: Date.now() });
+    setTimeout(() => {
+      if (touchStart && !isDragging) {
+        setDraggedTask(taskId);
+        setIsDragging(true);
+        addNotification('info', 'ドラッグモードが開始されました');
+      }
+    }, 500);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStart.x);
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    if (deltaX > 10 || deltaY > 10) {
+      setTouchStart(null);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, targetId: number) => {
+    if (isDragging && draggedTask && draggedTask !== targetId) {
+      moveTask(draggedTask, targetId);
+    }
+    setTouchStart(null);
+    setIsDragging(false);
+    setDraggedTask(null);
+  };
+
+  const moveTask = (draggedId: number | null, targetId: number) => {
+    if (!draggedId || draggedId === targetId) return;
     
     setTasks(prev => {
-      const draggedIndex = prev.findIndex(t => t.id === draggedTask);
+      const draggedIndex = prev.findIndex(t => t.id === draggedId);
       const targetIndex = prev.findIndex(t => t.id === targetId);
       if (draggedIndex === -1 || targetIndex === -1) return prev;
       
@@ -186,7 +222,6 @@ const App = () => {
       const [draggedItem] = newTasks.splice(draggedIndex, 1);
       newTasks.splice(targetIndex, 0, draggedItem);
       
-      // カスタム順序を更新
       const updatedTasks = newTasks.map((task, index) => ({
         ...task,
         customOrder: Date.now() + index
@@ -195,27 +230,12 @@ const App = () => {
       return updatedTasks;
     });
     
-    // ドラッグ&ドロップした場合は自動的にカスタム順序に切り替え
     if (sortBy !== 'custom') {
       setSortBy('custom');
       addNotification('info', 'カスタム順序に切り替えました');
     } else {
       addNotification('info', 'タスクを移動しました');
     }
-  };
-
-  const addSubtask = (taskId: number, subtaskTitle: string) => {
-    if (!subtaskTitle.trim()) return;
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    updateTask(taskId, { subtasks: [...task.subtasks, { id: Date.now(), title: subtaskTitle, done: false }] });
-    addNotification('success', 'サブタスクを追加しました！');
-  };
-
-  const toggleSubtask = (taskId: number, subtaskId: number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    updateTask(taskId, { subtasks: task.subtasks.map(st => st.id === subtaskId ? { ...st, done: !st.done } : st) });
   };
 
   const bulkActions = {
@@ -341,7 +361,7 @@ const App = () => {
           </label>
           {sortBy !== 'custom' && (
             <div style={{ marginTop: '8px', padding: '8px', backgroundColor: theme.border, borderRadius: '4px', fontSize: '12px', color: theme.textSecondary }}>
-              💡 ヒント: タスクをドラッグ&ドロップすると自動的にカスタム順序に切り替わります
+              💡 ヒント: タスクを長押し→他のタスクをタップして移動（モバイル）、ドラッグ&ドロップで移動（PC）
             </div>
           )}
         </div>
@@ -382,6 +402,9 @@ const App = () => {
                onDragOver={(e) => e.preventDefault()} 
                onDrop={(e) => handleDrop(e, task.id)}
                onDragEnd={() => setDraggedTask(null)}
+               onTouchStart={(e) => handleTouchStart(e, task.id)}
+               onTouchMove={handleTouchMove}
+               onTouchEnd={(e) => handleTouchEnd(e, task.id)}
                style={{ 
                  backgroundColor: theme.card, 
                  borderRadius: '12px', 
@@ -391,7 +414,9 @@ const App = () => {
                  boxShadow: theme.shadow, 
                  cursor: 'grab', 
                  opacity: draggedTask === task.id ? 0.5 : 1,
-                 transition: 'all 0.2s ease'
+                 transition: 'all 0.2s ease',
+                 transform: isDragging && draggedTask === task.id ? 'scale(1.05)' : 'scale(1)',
+                 border: isDragging && draggedTask === task.id ? `2px dashed ${theme.primary}` : 'none'
                }}>
             
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -414,7 +439,7 @@ const App = () => {
               </button>
 
               <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px' }}>
                   {[
                     { text: `${configs.priority[task.priority as keyof typeof configs.priority]?.emoji} ${configs.priority[task.priority as keyof typeof configs.priority]?.name}`, color: configs.priority[task.priority as keyof typeof configs.priority]?.color },
                     { text: `${configs.category[task.category as keyof typeof configs.category]?.emoji} ${configs.category[task.category as keyof typeof configs.category]?.name}`, color: configs.category[task.category as keyof typeof configs.category]?.color },
@@ -447,25 +472,10 @@ const App = () => {
                     </div>
                   </div>
                 ) : (
-                  <div onClick={() => startEdit(task)} style={{ fontSize: '16px', textDecoration: task.done ? 'line-through' : 'none', color: task.done ? theme.textSecondary : theme.text, cursor: 'pointer', marginBottom: '8px', lineHeight: '1.4' }}>
+                  <div onClick={() => startEdit(task)} style={{ fontSize: '20px', fontWeight: '600', textDecoration: task.done ? 'line-through' : 'none', color: task.done ? theme.textSecondary : theme.text, cursor: 'pointer', marginBottom: '8px', lineHeight: '1.4' }}>
                     {task.title}
                   </div>
                 )}
-
-                {task.subtasks.length > 0 && (
-                  <div style={{ marginLeft: '20px', marginBottom: '8px' }}>
-                    {task.subtasks.map(subtask => (
-                      <div key={subtask.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <button onClick={() => toggleSubtask(task.id, subtask.id)} style={{ width: '16px', height: '16px', borderRadius: '3px', border: `1px solid ${subtask.done ? theme.success : theme.border}`, backgroundColor: subtask.done ? theme.success : 'transparent', cursor: 'pointer', fontSize: '10px' }}>
-                          {subtask.done && '✓'}
-                        </button>
-                        <span style={{ fontSize: '14px', textDecoration: subtask.done ? 'line-through' : 'none', color: subtask.done ? theme.textSecondary : theme.text }}>{subtask.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <button onClick={() => { const title = prompt('サブタスクを追加:'); if (title) addSubtask(task.id, title); }} style={{...styles.button('secondary'), padding: '4px 8px', fontSize: '12px'}}>➕ サブタスク</button>
               </div>
 
               <button onClick={() => deleteTask(task.id)} style={{...styles.button('danger'), padding: '8px', flexShrink: 0}}>🗑️</button>
@@ -486,6 +496,18 @@ const App = () => {
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
+        }
+        * {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        input, textarea, select {
+          -webkit-user-select: text !important;
+          -moz-user-select: text !important;
+          -ms-user-select: text !important;
+          user-select: text !important;
         }
       `}</style>
     </div>
