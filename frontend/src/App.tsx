@@ -236,19 +236,27 @@ const handleTouchMove = (e) => {
   }));
 };
 
-const handleTouchEnd = (e, targetTaskId) => {
+const handleTouchEnd = (e) => {
   e.preventDefault();
-  
+
   // タイマーをクリア
   if (touchState.longPressTimer) {
     clearTimeout(touchState.longPressTimer);
   }
-  
-  // ドラッグ中で、異なるタスクにタッチした場合は移動
-  if (touchState.isDragging && touchState.draggedTaskId && touchState.draggedTaskId !== targetTaskId) {
+
+  // タッチ位置の要素を取得
+  const targetElem = document.elementFromPoint(touchState.currentX, touchState.currentY);
+  const targetTaskId = targetElem?.getAttribute('data-taskid');
+
+  if (
+    touchState.isDragging &&
+    touchState.draggedTaskId &&
+    targetTaskId &&
+    targetTaskId !== touchState.draggedTaskId
+  ) {
     moveTask(touchState.draggedTaskId, targetTaskId);
   }
-  
+
   // 状態をリセット
   setTouchState({
     startX: 0,
@@ -449,6 +457,7 @@ const handleTouchEnd = (e, targetTaskId) => {
       <div>
         {filteredTasks.map(task => (
           <div key={task.id} 
+               data-taskid={task.id}
                draggable 
                onDragStart={(e) => handleDragStart(e, task.id)} 
                onDragOver={(e) => e.preventDefault()} 
@@ -456,7 +465,7 @@ const handleTouchEnd = (e, targetTaskId) => {
                onDragEnd={() => setDraggedTask(null)}
                onTouchStart={(e) => handleTouchStart(e, task.id)}
                onTouchMove={handleTouchMove}
-               onTouchEnd={(e) => handleTouchEnd(e, task.id)}
+               onTouchEnd={handleTouchEnd}
                style={{ 
                  backgroundColor: theme.card, 
                  borderRadius: '12px', 
