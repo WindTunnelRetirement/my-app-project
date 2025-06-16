@@ -22,13 +22,7 @@ interface Notification {
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  
-  // ダークモード設定を永続化（ローカル変数に変更）
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
-
+  const [darkMode, setDarkMode] = useState(true);
   const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
@@ -47,70 +41,122 @@ const App = () => {
     category: { general: { name: '一般', color: '#6c5ce7', emoji: '📝' }, work: { name: '仕事', color: '#00b894', emoji: '💼' }, personal: { name: 'プライベート', color: '#fd79a8', emoji: '🏠' }, shopping: { name: '買い物', color: '#fdcb6e', emoji: '🛒' }, health: { name: '健康', color: '#00cec9', emoji: '💪' } }
   };
 
-  const theme = {
-    background: darkMode ? '#000000' : '#f2f2f7',
-    card: darkMode ? '#1c1c1e' : '#ffffff',
-    text: darkMode ? '#ffffff' : '#000000',
-    textSecondary: darkMode ? '#8e8e93' : '#8e8e93',
-    border: darkMode ? '#38383a' : '#c6c6c8',
-    primary: darkMode ? '#0A84FF' : '#007AFF',
-    success: darkMode ? '#30D158' : '#34C759',
-    destructive: darkMode ? '#FF453A' : '#FF3B30',
-    shadow: darkMode ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)'
-  };
+// テーマ設定を以下に置き換え
+const theme = {
+  background: 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0e4b99 100%)',
+  card: 'rgba(255, 255, 255, 0.05)',
+  cardHover: 'rgba(255, 255, 255, 0.1)',
+  text: '#ffffff',
+  textSecondary: '#b0b0b0',
+  border: 'rgba(255, 255, 255, 0.1)',
+  primary: '#64b5f6',
+  success: '#81c784',
+  destructive: '#e57373',
+  shadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+  glassMorphism: 'backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);'
+};
 
-  const styles = {
-    input: { 
-      width: '100%', 
-      padding: '12px', 
-      border: `1px solid ${theme.border}`, 
-      borderRadius: '8px', 
-      backgroundColor: theme.card, 
-      color: theme.text, 
-      fontSize: '16px', 
-      boxSizing: 'border-box' as const, 
-      outline: 'none', 
-      minHeight: '44px' 
-    },
-    button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
-      padding: '12px 16px', 
-      border: 'none', 
-      borderRadius: '8px', 
-      cursor: 'pointer', 
-      fontSize: '14px', 
-      fontWeight: '600', 
-      minHeight: '44px', 
-      backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : theme.textSecondary, 
-      color: 'white' 
-    }),
-    card: { 
-      backgroundColor: theme.card, 
-      borderRadius: '12px', 
-      padding: '20px', 
-      marginBottom: '20px', 
-      boxShadow: theme.shadow 
-    }
-  };
+// スタイル設定も更新
+const styles = {
+  input: { 
+    width: '100%', 
+    padding: '12px', 
+    border: `1px solid ${theme.border}`, 
+    borderRadius: '12px', 
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    color: theme.text, 
+    fontSize: '16px', 
+    boxSizing: 'border-box' as const, 
+    outline: 'none', 
+    minHeight: '44px',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    transition: 'all 0.3s ease'
+  },
+  button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
+    padding: '12px 16px', 
+    border: 'none', 
+    borderRadius: '12px', 
+    cursor: 'pointer', 
+    fontSize: '14px', 
+    fontWeight: '600', 
+    minHeight: '44px', 
+    backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : 'rgba(255, 255, 255, 0.1)', 
+    color: 'white',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    transition: 'all 0.3s ease',
+    border: `1px solid ${variant === 'secondary' ? theme.border : 'transparent'}`
+  }),
+  card: { 
+    backgroundColor: theme.card, 
+    borderRadius: '20px', 
+    padding: '24px', 
+    marginBottom: '20px', 
+    boxShadow: theme.shadow,
+    backdropFilter: 'blur(15px)',
+    WebkitBackdropFilter: 'blur(15px)',
+    border: `1px solid ${theme.border}`,
+    transition: 'all 0.3s ease'
+  }
+};
 
-  // 初期データ読み込み
+interface Star {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  opacity: number;
+  twinkleDelay: number;
+}
+
+// 星空エフェクト用のコンポーネントを追加（メインコンポーネント内の最初に配置）
+const StarField = () => {
+  const [stars, setStars] = useState<Star[]>([]);
+
   useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
-    }
+    // if (darkMode) の条件分岐を削除して、常に星を表示
+    const newStars = Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.8 + 0.2,
+      twinkleDelay: Math.random() * 2
+    }));
+    setStars(newStars);
   }, []);
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: 0
+    }}>
 
-  // タスクの永続化
-  useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-  }, [tasks]);
-
-  // ダークモード設定の永続化
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-  }, [darkMode]);
+      {stars.map(star => (
+        <div
+          key={star.id}
+          style={{
+            position: 'absolute',
+            left: `${star.x}%`,
+            top: `${star.y}%`,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            backgroundColor: '#ffffff',
+            borderRadius: '50%',
+            opacity: star.opacity,
+            animation: `twinkle 2s infinite ${star.twinkleDelay}s ease-in-out alternate`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Date.now();
@@ -179,16 +225,7 @@ const App = () => {
 
   // モバイル用タッチイベント
 const handleTaskTap = (taskId: number) => {
-  // 編集モードの場合は編集を開始
-  if (!selectedForSwap && !bulkMode) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      startEdit(task);
-    }
-    return;
-  }
-
-  // バルクモードの場合は選択切り替え
+  // バルクモードの場合は選択切り替えのみ
   if (bulkMode) {
     const newSelected = new Set(selectedTasks);
     if (newSelected.has(taskId)) {
@@ -200,17 +237,14 @@ const handleTaskTap = (taskId: number) => {
     return;
   }
 
-  // 入れ替えモードの処理
+  // 入れ替えモードの場合のみ処理
   if (selectedForSwap === null) {
-    // 最初のタスクを選択
     setSelectedForSwap(taskId);
     addNotification('info', 'もう1つのタスクをタップして入れ替え');
   } else if (selectedForSwap === taskId) {
-    // 同じタスクをタップした場合は選択解除
     setSelectedForSwap(null);
     addNotification('info', '選択を解除しました');
   } else {
-    // 異なるタスクをタップした場合は入れ替え
     moveTask(selectedForSwap, taskId);
     setSelectedForSwap(null);
   }
@@ -287,19 +321,29 @@ const moveTask = (sourceId: number, targetId: number) => {
   const completedCount = tasks.filter(t => t.done).length;
 
   useEffect(() => {
-    document.documentElement.style.backgroundColor = theme.background;
-    document.body.style.backgroundColor = theme.background;
+    document.documentElement.style.background = theme.background;
+    document.body.style.background = theme.background;
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    document.body.style.minHeight = '100vh';
     return () => {
-      document.documentElement.style.backgroundColor = '';
-      document.body.style.backgroundColor = '';
+      document.documentElement.style.background = '';
+      document.body.style.background = '';
     };
-  }, [theme.background]);
+  }, []);
 
   return (
-    <div style={{ backgroundColor: theme.background, color: theme.text, minHeight: '100vh', width: '100%', padding: '16px', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', position: 'relative', boxSizing: 'border-box' }}>
-      
+    <div style={{ 
+      background: theme.background, 
+      color: theme.text, 
+      minHeight: '100vh', 
+      width: '100%', 
+      padding: '16px', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', 
+      position: 'relative', 
+      boxSizing: 'border-box' 
+    }}>
+      <StarField />
       {/* 通知システム */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {notifications.map(notification => (
@@ -327,8 +371,7 @@ const moveTask = (sourceId: number, targetId: number) => {
           {[
             { icon: '🔍', action: () => setShowFilters(!showFilters) },
             { icon: '☑️', action: () => setBulkMode(!bulkMode), active: bulkMode },
-            { icon: '🔄', action: () => setSelectedForSwap(null), active: selectedForSwap !== null },
-            { icon: darkMode ? '☀️' : '🌙', action: () => setDarkMode(!darkMode) }
+            { icon: '🔄', action: () => setSelectedForSwap(null), active: selectedForSwap !== null }
           ].map((btn, i) => (
             <button key={i} onClick={btn.action} 
                     style={{...styles.button(btn.active ? 'primary' : 'secondary'), padding: '12px', minWidth: '44px'}}>
@@ -419,17 +462,25 @@ const moveTask = (sourceId: number, targetId: number) => {
           <div key={task.id} 
                data-taskid={task.id}
                onClick={() => handleTaskTap(task.id)}
+               draggable
+               onDragStart={(e) => handleDragStart(e, task.id)}
+               onDrop={(e) => handleDrop(e, task.id)}
+               onDragOver={(e) => e.preventDefault()}
                style={{ 
-                  backgroundColor: theme.card, 
-                  borderRadius: '12px', 
-                  padding: '16px', 
-                  marginBottom: '12px', 
+                  background: theme.card,
+                  borderRadius: '20px', 
+                  padding: '20px', 
+                  marginBottom: '16px', 
                   borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
-                  boxShadow: theme.shadow, 
+                  boxShadow: theme.shadow,
+                  backdropFilter: 'blur(15px)',
+                  WebkitBackdropFilter: 'blur(15px)',
+                  border: `1px solid ${selectedForSwap === task.id ? theme.primary : theme.border}`,
                   cursor: 'pointer', 
-                  border: selectedForSwap === task.id ? `3px solid ${theme.primary}` : 'none',
                   transform: selectedForSwap === task.id ? 'scale(1.02)' : 'scale(1)',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  zIndex: 1
                }}>
             
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -439,7 +490,7 @@ const moveTask = (sourceId: number, targetId: number) => {
                 setSelectedTasks(newSelected); 
               }} style={{ marginTop: '4px' }} />}
               
-              <button onClick={() => updateTask(task.id, { done: !task.done })} 
+              <button onClick={(e) => { e.stopPropagation(); updateTask(task.id, { done: !task.done }); }} 
                       style={{ 
                         width: '28px', height: '28px', borderRadius: '50%', 
                         border: `2px solid ${task.done ? theme.success : theme.border}`, 
@@ -477,21 +528,21 @@ const moveTask = (sourceId: number, targetId: number) => {
                       </select>
                     </div>
                     <input type="date" value={editData.dueDate || ''} onChange={(e) => setEditData({...editData, dueDate: e.target.value})} 
-                           style={{...styles.input, marginBottom: '8px', colorScheme: darkMode ? 'dark' : 'light'}} />
+                           style={{...styles.input, marginBottom: '8px', colorScheme: 'dark'}} />
                     <input placeholder="タグ (カンマ区切り)" value={editData.tags || ''} onChange={(e) => setEditData({...editData, tags: e.target.value})} style={{...styles.input, marginBottom: '8px'}} />
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={saveEdit} style={styles.button('primary')}>保存</button>
-                      <button onClick={() => setEditingId(null)} style={styles.button('secondary')}>キャンセル</button>
+                      <button onClick={(e) => { e.stopPropagation(); saveEdit(); }} style={styles.button('primary')}>保存</button>
+                      <button onClick={(e) => { e.stopPropagation(); setEditingId(null); }} style={styles.button('secondary')}>キャンセル</button>
                     </div>
                   </div>
                 ) : (
-                  <div onClick={() => startEdit(task)} style={{ fontSize: '20px', fontWeight: '600', textDecoration: task.done ? 'line-through' : 'none', color: task.done ? theme.textSecondary : theme.text, cursor: 'pointer', marginBottom: '8px', lineHeight: '1.4' }}>
+                  <div style={{ fontSize: '20px', fontWeight: '600', textDecoration: task.done ? 'line-through' : 'none', color: task.done ? theme.textSecondary : theme.text, marginBottom: '8px', lineHeight: '1.4' }}>
                     {task.title}
                   </div>
                 )}
               </div>
-
-              <button onClick={() => deleteTask(task.id)} style={{...styles.button('danger'), padding: '8px', flexShrink: 0}}>🗑️</button>
+              <button onClick={(e) => { e.stopPropagation(); startEdit(task); }} style={{...styles.button('secondary'), padding: '8px', flexShrink: 0, marginRight: '8px'}}>✏️</button>
+              <button onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }} style={{...styles.button('danger'), padding: '8px', flexShrink: 0}}>🗑️</button>
             </div>
           </div>
         ))}
@@ -513,6 +564,10 @@ const moveTask = (sourceId: number, targetId: number) => {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 0.3; transform: scale(0.8); }
         }
         * {
           -webkit-user-select: none;
