@@ -22,7 +22,6 @@ interface Notification {
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [darkMode, setDarkMode] = useState(true);
   const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
@@ -158,10 +157,10 @@ const StarField = () => {
   );
 };
 
-  const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
+  const addNotification = (type: 'success' | 'error' | 'info', message: string, duration = 1000) => {
     const id = Date.now();
     setNotifications(prev => [...prev, { id, type, message, timestamp: id }]);
-    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 3000);
+    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), duration);
   };
 
   const updateTask = (id: number, updates: Partial<Task>) => {
@@ -192,7 +191,7 @@ const StarField = () => {
       customOrder: Date.now()
     };
     setTasks(prev => [task, ...prev]);
-    setNewTask({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
+    setNewTask({ title: '', priority: newTask.priority, category: newTask.category, dueDate: '', tags: '' });
     addNotification('success', 'タスクを追加しました！');
   };
 
@@ -369,9 +368,8 @@ const moveTask = (sourceId: number, targetId: number) => {
         <h1 style={{ margin: 0, color: theme.primary, fontSize: '28px' }}>✅ Tasks</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
-            { icon: '🔍', action: () => setShowFilters(!showFilters) },
-            { icon: '☑️', action: () => setBulkMode(!bulkMode), active: bulkMode },
-            { icon: '🔄', action: () => setSelectedForSwap(null), active: selectedForSwap !== null }
+            { icon: '🔍', action: () => setShowFilters(!showFilters), active: showFilters },
+            { icon: '☑️', action: () => setBulkMode(!bulkMode), active: bulkMode }
           ].map((btn, i) => (
             <button key={i} onClick={btn.action} 
                     style={{...styles.button(btn.active ? 'primary' : 'secondary'), padding: '12px', minWidth: '44px'}}>
@@ -383,11 +381,44 @@ const moveTask = (sourceId: number, targetId: number) => {
 
       {/* 進捗 */}
       <div style={styles.card}>
-        <div style={{ textAlign: 'center', marginBottom: '12px', fontSize: '18px', fontWeight: '600' }}>
-          進捗: {completedCount}/{tasks.length} 完了
-        </div>
-        <div style={{ width: '100%', height: '8px', backgroundColor: theme.border, borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{ width: `${tasks.length ? (completedCount / tasks.length) * 100 : 0}%`, height: '100%', backgroundColor: theme.success, transition: 'width 0.3s ease' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* 円形進捗 */}
+          <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+            <svg width="60" height="60" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="30" cy="30" r="25" fill="none" stroke={theme.border} strokeWidth="4"/>
+              <circle 
+                cx="30" cy="30" r="25" fill="none" 
+                stroke={theme.success} strokeWidth="4"
+                strokeDasharray={`${2 * Math.PI * 25}`}
+                strokeDashoffset={`${2 * Math.PI * 25 * (1 - (tasks.length ? completedCount / tasks.length : 0))}`}
+                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+              />
+            </svg>
+            <div style={{ 
+              position: 'absolute', 
+              top: '50%', 
+              left: '50%', 
+              transform: 'translate(-50%, -50%)',
+              fontSize: '12px',
+              fontWeight: '600',
+              textAlign: 'center'
+            }}>
+              {tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0}%
+            </div>
+          </div>
+          
+          {/* 情報 */}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+              {completedCount}/{tasks.length} 完了
+            </div>
+            <div style={{ fontSize: '13px', color: theme.textSecondary }}>
+              {tasks.length === completedCount && tasks.length > 0 ? 
+                '🎉 お疲れ様でした！' : 
+                `今日の目標まであと ${Math.max(0, tasks.length - completedCount)} 個`
+              }
+            </div>
+          </div>
         </div>
       </div>
 
@@ -450,7 +481,7 @@ const moveTask = (sourceId: number, targetId: number) => {
             {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
           <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})} 
-                 style={{...styles.input, colorScheme: darkMode ? 'dark' : 'light'}} />
+                 style={{...styles.input, colorScheme: 'dark'}} />
         </div>
         <input placeholder="タグ (カンマ区切り)" value={newTask.tags} onChange={(e) => setNewTask({...newTask, tags: e.target.value})} style={{...styles.input, marginBottom: '12px'}} />
         <button onClick={addTask} disabled={!newTask.title.trim()} style={{...styles.button('primary'), width: '100%', minHeight: '48px'}}>➕ タスクを追加</button>
@@ -580,6 +611,19 @@ const moveTask = (sourceId: number, targetId: number) => {
           -moz-user-select: text !important;
           -ms-user-select: text !important;
           user-select: text !important;
+        }
+        select {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+          color: #ffffff !important;
+        }
+        select option {
+          background-color: #1a1a2e !important;
+          color: #ffffff !important;
+          padding: 8px !important;
+        }
+        select option:checked {
+          background-color: #64b5f6 !important;
+          color: #ffffff !important;
         }
       `}</style>
     </div>
