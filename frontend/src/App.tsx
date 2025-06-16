@@ -40,17 +40,7 @@ const App = () => {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [touchState, setTouchState] = useState({
-    startX: 0,
-    startY: 0,
-    startTime: 0,
-    currentX: 0,
-    currentY: 0,
-    isDragging: false,
-    draggedTaskId: null,
-    longPressTimer: null
-  });
-  const [isDragging, setIsDragging] = useState(false);
+  const [selectedForSwap, setSelectedForSwap] = useState<number | null>(null);
 
   const configs = {
     priority: { 1: { name: '高', color: '#ff4757', emoji: '🔥' }, 2: { name: '中', color: '#ffa502', emoji: '⚡' }, 3: { name: '低', color: '#5352ed', emoji: '💫' } },
@@ -188,110 +178,72 @@ const App = () => {
   };
 
   // モバイル用タッチイベント
-const handleTouchStart = (e, taskId) => {
-  // 編集モードの場合はドラッグを無効にする
-  if (editingId === taskId) return;
-  
-  const touch = e.touches[0];
-  
-  // 長押しタイマーを設定
-  const timer = setTimeout(() => {
-    setTouchState(prev => ({
-      ...prev,
-      isDragging: true,
-      draggedTaskId: taskId
-    }));
-    addNotification('info', 'ドラッグモード開始 - 移動先をタップ');
-    // バイブレーション（対応デバイスのみ）
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
+const handleTaskTap = (taskId: number) => {
+  // 編集モードの場合は編集を開始
+  if (!selectedForSwap && !bulkMode) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      startEdit(task);
     }
-  }, 500);
-
-  setTouchState({
-    startX: touch.clientX,
-    startY: touch.clientY,
-    currentX: touch.clientX,
-    currentY: touch.clientY,
-    startTime: Date.now(),
-    isDragging: false,
-    draggedTaskId: null,
-    longPressTimer: timer
-  });
-};
-
-const handleTouchMove = (e) => {
-  const touch = e.touches[0];
-  const deltaX = Math.abs(touch.clientX - touchState.startX);
-  const deltaY = Math.abs(touch.clientY - touchState.startY);
-  
-  // ドラッグ中でない場合のみ、一定距離移動したら長押しタイマーをキャンセル
-  if (!touchState.isDragging && (deltaX > 15 || deltaY > 15) && touchState.longPressTimer) {
-    clearTimeout(touchState.longPressTimer);
-    setTouchState(prev => ({ ...prev, longPressTimer: null }));
-  }
-  
-  setTouchState(prev => ({
-    ...prev,
-    currentX: touch.clientX,
-    currentY: touch.clientY
-  }));
-};
-
-const handleTouchEnd = (e, targetTaskId) => {
-  // タイマーをクリア
-  if (touchState.longPressTimer) {
-    clearTimeout(touchState.longPressTimer);
-  }
-  
-  // ドラッグ中で、異なるタスクにタッチした場合は移動
-  if (touchState.isDragging && touchState.draggedTaskId && touchState.draggedTaskId !== targetTaskId) {
-    e.preventDefault();
-    e.stopPropagation();
-    moveTask(touchState.draggedTaskId, targetTaskId);
-    addNotification('success', 'タスクを移動しました！');
+    return;
   }
 
-  // 状態をリセット
-  setTouchState({
-    startX: 0,
-    startY: 0,
-    startTime: 0,
-    currentX: 0,
-    currentY: 0,
-    isDragging: false,
-    draggedTaskId: null,
-    longPressTimer: null
-  });
-};
-
-  const moveTask = (draggedId, targetId) => {
-    if (!draggedId || draggedId === targetId) return;
-    
-    setTasks(prev => {
-      const draggedIndex = prev.findIndex(t => t.id === draggedId);
-      const targetIndex = prev.findIndex(t => t.id === targetId);
-      if (draggedIndex === -1 || targetIndex === -1) return prev;
-      
-      const newTasks = [...prev];
-      const [draggedItem] = newTasks.splice(draggedIndex, 1);
-      newTasks.splice(targetIndex, 0, draggedItem);
-      
-      const updatedTasks = newTasks.map((task, index) => ({
-        ...task,
-        customOrder: Date.now() + index
-      }));
-      
-      return updatedTasks;
-    });
-    
-    if (sortBy !== 'custom') {
-      setSortBy('custom');
-      addNotification('info', 'カスタム順序に切り替えました');
+  // バルクモードの場合は選択切り替え
+  if (bulkMode) {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId);
     } else {
-      addNotification('success', 'タスクを移動しました！');
+      newSelected.add(taskId);
     }
-  };
+    setSelectedTasks(newSelected);
+    return;
+  }
+
+  // 入れ替えモードの処理
+  if (selectedForSwap === null) {
+    // 最初のタスクを選択
+    setSelectedForSwap(taskId);
+    addNotification('info', 'もう1つのタスクをタップして入れ替え');
+  } else if (selectedForSwap === taskId) {
+    // 同じタスクをタップした場合は選択解除
+    setSelectedForSwap(null);
+    addNotification('info', '選択を解除しました');
+  } else {
+    // 異なるタスクをタップした場合は入れ替え
+    moveTask(selectedForSwap, taskId);
+    setSelectedForSwap(null);
+  }
+};
+
+// moveTask関数は既存のものをそのまま使用（ドラッグ関連のパラメータ名は変更）
+const moveTask = (sourceId: number, targetId: number) => {
+  if (!sourceId || sourceId === targetId) return;
+  
+  setTasks(prev => {
+    const sourceIndex = prev.findIndex(t => t.id === sourceId);
+    const targetIndex = prev.findIndex(t => t.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return prev;
+    
+    const newTasks = [...prev];
+    const [sourceItem] = newTasks.splice(sourceIndex, 1);
+    newTasks.splice(targetIndex, 0, sourceItem);
+    
+    const updatedTasks = newTasks.map((task, index) => ({
+      ...task,
+      customOrder: Date.now() + index
+    }));
+    
+    return updatedTasks;
+  });
+  
+  if (sortBy !== 'custom') {
+    setSortBy('custom');
+    addNotification('info', 'カスタム順序に切り替えました');
+  } else {
+    addNotification('success', 'タスクを入れ替えました！');
+  }
+};
 
   const bulkActions = {
     delete: () => { 
@@ -375,6 +327,7 @@ const handleTouchEnd = (e, targetTaskId) => {
           {[
             { icon: '🔍', action: () => setShowFilters(!showFilters) },
             { icon: '☑️', action: () => setBulkMode(!bulkMode), active: bulkMode },
+            { icon: '🔄', action: () => setSelectedForSwap(null), active: selectedForSwap !== null },
             { icon: darkMode ? '☀️' : '🌙', action: () => setDarkMode(!darkMode) }
           ].map((btn, i) => (
             <button key={i} onClick={btn.action} 
@@ -422,7 +375,7 @@ const handleTouchEnd = (e, targetTaskId) => {
         </div>
       )}
 
-      {touchState.isDragging && (
+      {selectedForSwap && (
         <div style={{ 
           ...styles.card, 
           backgroundColor: theme.primary, 
@@ -430,7 +383,7 @@ const handleTouchEnd = (e, targetTaskId) => {
           textAlign: 'center',
           animation: 'pulse 1.5s infinite'
         }}>
-          🎯 移動先のタスクをタップしてください
+          🔄 入れ替え先のタスクをタップしてください
         </div>
       )}
 
@@ -465,14 +418,7 @@ const handleTouchEnd = (e, targetTaskId) => {
         {filteredTasks.map(task => (
           <div key={task.id} 
                data-taskid={task.id}
-               draggable 
-               onDragStart={(e) => handleDragStart(e, task.id)} 
-               onDragOver={(e) => e.preventDefault()} 
-               onDrop={(e) => handleDrop(e, task.id)}
-               onDragEnd={() => setDraggedTask(null)}
-               onTouchStart={(e) => handleTouchStart(e, task.id)}
-               onTouchMove={handleTouchMove}
-               onTouchEnd={handleTouchEnd}
+               onClick={() => handleTaskTap(task.id)}
                style={{ 
                   backgroundColor: theme.card, 
                   borderRadius: '12px', 
@@ -480,12 +426,9 @@ const handleTouchEnd = (e, targetTaskId) => {
                   marginBottom: '12px', 
                   borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
                   boxShadow: theme.shadow, 
-                  cursor: 'grab', 
-                  opacity: touchState.draggedTaskId === task.id ? 0.5 : 1,
-                  transform: touchState.draggedTaskId === task.id ? 'scale(1.02)' : 'scale(1)',
-                  border: touchState.isDragging ? (touchState.draggedTaskId === task.id ? `3px solid ${theme.success}` : `2px dashed ${theme.primary}`) : 'none',
-                  touchAction: 'manipulation',
-                  userSelect: 'none',
+                  cursor: 'pointer', 
+                  border: selectedForSwap === task.id ? `3px solid ${theme.primary}` : 'none',
+                  transform: selectedForSwap === task.id ? 'scale(1.02)' : 'scale(1)',
                   transition: 'all 0.2s ease'
                }}>
             
