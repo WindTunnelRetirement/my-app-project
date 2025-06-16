@@ -40,7 +40,16 @@ const App = () => {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
+  const [touchState, setTouchState] = useState({
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    currentX: 0,
+    currentY: 0,
+    isDragging: false,
+    draggedTaskId: null,
+    longPressTimer: null
+  });
   const [isDragging, setIsDragging] = useState(false);
 
   const configs = {
@@ -179,38 +188,81 @@ const App = () => {
   };
 
   // モバイル用タッチイベント
-  const handleTouchStart = (e: React.TouchEvent, taskId: number) => {
-    const touch = e.touches[0];
-    setTouchStart({ x: touch.clientX, y: touch.clientY, time: Date.now() });
-    setTimeout(() => {
-      if (touchStart && !isDragging) {
-        setDraggedTask(taskId);
-        setIsDragging(true);
-        addNotification('info', 'ドラッグモードが開始されました');
-      }
-    }, 500);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-    const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - touchStart.x);
-    const deltaY = Math.abs(touch.clientY - touchStart.y);
-    if (deltaX > 10 || deltaY > 10) {
-      setTouchStart(null);
+const handleTouchStart = (e, taskId) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  
+  // 長押しタイマーを設定
+  const timer = setTimeout(() => {
+    setTouchState(prev => ({
+      ...prev,
+      isDragging: true,
+      draggedTaskId: taskId
+    }));
+    addNotification('info', 'ドラッグモード開始 - 移動先をタップ');
+    // バイブレーション（対応デバイスのみ）
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
     }
-  };
+  }, 500);
 
-  const handleTouchEnd = (e: React.TouchEvent, targetId: number) => {
-    if (isDragging && draggedTask && draggedTask !== targetId) {
-      moveTask(draggedTask, targetId);
-    }
-    setTouchStart(null);
-    setIsDragging(false);
-    setDraggedTask(null);
-  };
+  setTouchState({
+    startX: touch.clientX,
+    startY: touch.clientY,
+    currentX: touch.clientX,
+    currentY: touch.clientY,
+    startTime: Date.now(),
+    isDragging: false,
+    draggedTaskId: null,
+    longPressTimer: timer
+  });
+};
 
-  const moveTask = (draggedId: number | null, targetId: number) => {
+const handleTouchMove = (e) => {
+  const touch = e.touches[0];
+  const deltaX = Math.abs(touch.clientX - touchState.startX);
+  const deltaY = Math.abs(touch.clientY - touchState.startY);
+  
+  // 一定距離移動したら長押しタイマーをキャンセル
+  if ((deltaX > 10 || deltaY > 10) && touchState.longPressTimer) {
+    clearTimeout(touchState.longPressTimer);
+    setTouchState(prev => ({ ...prev, longPressTimer: null }));
+  }
+  
+  setTouchState(prev => ({
+    ...prev,
+    currentX: touch.clientX,
+    currentY: touch.clientY
+  }));
+};
+
+const handleTouchEnd = (e, targetTaskId) => {
+  e.preventDefault();
+  
+  // タイマーをクリア
+  if (touchState.longPressTimer) {
+    clearTimeout(touchState.longPressTimer);
+  }
+  
+  // ドラッグ中で、異なるタスクにタッチした場合は移動
+  if (touchState.isDragging && touchState.draggedTaskId && touchState.draggedTaskId !== targetTaskId) {
+    moveTask(touchState.draggedTaskId, targetTaskId);
+  }
+  
+  // 状態をリセット
+  setTouchState({
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    currentX: 0,
+    currentY: 0,
+    isDragging: false,
+    draggedTaskId: null,
+    longPressTimer: null
+  });
+};
+
+  const moveTask = (draggedId, targetId) => {
     if (!draggedId || draggedId === targetId) return;
     
     setTasks(prev => {
@@ -234,7 +286,7 @@ const App = () => {
       setSortBy('custom');
       addNotification('info', 'カスタム順序に切り替えました');
     } else {
-      addNotification('info', 'タスクを移動しました');
+      addNotification('success', 'タスクを移動しました！');
     }
   };
 
@@ -413,10 +465,11 @@ const App = () => {
                  borderLeft: `4px solid ${configs.priority[task.priority as keyof typeof configs.priority]?.color}`, 
                  boxShadow: theme.shadow, 
                  cursor: 'grab', 
-                 opacity: draggedTask === task.id ? 0.5 : 1,
-                 transition: 'all 0.2s ease',
-                 transform: isDragging && draggedTask === task.id ? 'scale(1.05)' : 'scale(1)',
-                 border: isDragging && draggedTask === task.id ? `2px dashed ${theme.primary}` : 'none'
+                 opacity: touchState.draggedTaskId === task.id ? 0.7 : 1,
+                 transform: touchState.draggedTaskId === task.id ? 'scale(1.05)' : 'scale(1)',
+                 border: touchState.draggedTaskId === task.id ? `2px solid ${theme.primary}` : 'none',
+                 touchAction: 'none',
+                 userSelect: 'none'
                }}>
             
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
