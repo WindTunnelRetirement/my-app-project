@@ -9,7 +9,7 @@ RUN apt-get update -qq && \
     postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# backendディレクトリのGemfileをコピー
+# GemfileとGemfile.lockのみを先にコピー（キャッシュ効率のため）
 COPY backend/Gemfile backend/Gemfile.lock ./
 RUN bundle install --deployment --without development test
 
