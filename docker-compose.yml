@@ -29,7 +29,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      RAILS_ENV: development
+      # RAILS_ENV: development
 
   frontend:
     build: ./frontend
