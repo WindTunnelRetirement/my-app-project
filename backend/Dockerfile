@@ -10,11 +10,11 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # backendディレクトリのGemfileをコピー
-COPY backend/Gemfile backend/Gemfile.lock ./
+COPY Gemfile Gemfile.lock ./
 RUN bundle install --deployment --without development test
 
 # backendのアプリケーションコードをコピー
-COPY backend/ .
+COPY . .
 
 # 本番環境用の設定
 ENV RAILS_ENV=production
