@@ -1,0 +1,18 @@
+current directory: /app/vendor/bundle/ruby/3.2.0/gems/erb-5.0.1/ext/erb/escape
+/usr/local/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /app/vendor/bundle/ruby/3.2.0/gems/erb-5.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20250617-7-9s3gmx sitelibdir\=./.gem.20250617-7-9s3gmx clean
+
+current directory: /app/vendor/bundle/ruby/3.2.0/gems/erb-5.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20250617-7-9s3gmx sitelibdir\=./.gem.20250617-7-9s3gmx
+compiling escape.c
+linking shared-object erb/escape.so
+
+current directory: /app/vendor/bundle/ruby/3.2.0/gems/erb-5.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20250617-7-9s3gmx sitelibdir\=./.gem.20250617-7-9s3gmx install
+/usr/bin/install -c -m 0755 escape.so ./.gem.20250617-7-9s3gmx/erb
+
+current directory: /app/vendor/bundle/ruby/3.2.0/gems/erb-5.0.1/ext/erb/escape
+make DESTDIR\= sitearchdir\=./.gem.20250617-7-9s3gmx sitelibdir\=./.gem.20250617-7-9s3gmx clean
