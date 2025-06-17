@@ -17,7 +17,7 @@ services:
       args:
         HTTP_PROXY: http://proxy.denken.or.jp:911
         HTTPS_PROXY: http://proxy.denken.or.jp:911
-    command: bash -c "bundle install && rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0"
+    command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
     volumes:
       - ./backend:/app
     user: "${UID}:${GID}"
@@ -29,7 +29,6 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      # RAILS_ENV: development
 
   frontend:
     build: ./frontend
