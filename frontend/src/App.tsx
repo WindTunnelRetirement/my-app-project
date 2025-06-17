@@ -22,6 +22,7 @@ interface Notification {
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
@@ -113,6 +114,15 @@ interface Star {
 const StarField = () => {
   const [stars, setStars] = useState<Star[]>([]);
 
+  // ローディング画面用のuseEffect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500); // 2.5秒のローディング時間
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     // if (darkMode) の条件分岐を削除して、常に星を表示
     const newStars = Array.from({ length: 100 }, (_, i) => ({
@@ -153,6 +163,105 @@ const StarField = () => {
           }}
         />
       ))}
+    </div>
+  );
+};
+
+// ローディング画面コンポーネント
+const LoadingScreen = () => {
+  const [dots, setDots] = useState('');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: theme.background,
+      color: theme.text,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      animation: 'fadeOut 0.8s ease-in-out 1.7s forwards'
+    }}>
+      <StarField />
+      
+      {/* メインロゴ */}
+      <div style={{
+        fontSize: '4rem',
+        fontWeight: '700',
+        color: theme.primary,
+        marginBottom: '2rem',
+        textShadow: `0 0 30px ${theme.primary}40`,
+        animation: 'glow 2s ease-in-out infinite alternate'
+      }}>
+        Focus
+      </div>
+
+      {/* サブタイトル */}
+      <div style={{
+        fontSize: '1.2rem',
+        color: theme.textSecondary,
+        marginBottom: '3rem',
+        opacity: 0.8,
+        animation: 'slideUp 1s ease-out 0.5s both'
+      }}>
+        星空の下でタスクを整理
+      </div>
+
+      {/* ローディングインジケーター */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        animation: 'slideUp 1s ease-out 1s both'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: `3px solid ${theme.border}`,
+          borderTop: `3px solid ${theme.primary}`,
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        
+        <div style={{
+          fontSize: '1rem',
+          color: theme.textSecondary,
+          minWidth: '100px'
+        }}>
+          読み込み中{dots}
+        </div>
+      </div>
+
+      {/* 装飾的な要素 */}
+      <div style={{
+        position: 'absolute',
+        bottom: '10%',
+        display: 'flex',
+        gap: '2rem',
+        animation: 'slideUp 1s ease-out 1.5s both'
+      }}>
+        {['📝', '⭐', '🌙'].map((emoji, i) => (
+          <div key={i} style={{
+            fontSize: '2rem',
+            opacity: 0.5,
+            animation: `float 3s ease-in-out infinite ${i * 0.5}s`
+          }}>
+            {emoji}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -331,6 +440,11 @@ const moveTask = (sourceId: number, targetId: number) => {
     };
   }, []);
 
+  // ローディング中の場合
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div style={{ 
       background: theme.background, 
@@ -340,7 +454,8 @@ const moveTask = (sourceId: number, targetId: number) => {
       padding: '16px', 
       fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', 
       position: 'relative', 
-      boxSizing: 'border-box' 
+      boxSizing: 'border-box',
+      animation: 'fadeIn 0.8s ease-in-out'
     }}>
       <StarField />
       {/* 通知システム */}
@@ -365,7 +480,7 @@ const moveTask = (sourceId: number, targetId: number) => {
 
       {/* ヘッダー */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '20px 0', borderBottom: `1px solid ${theme.border}` }}>
-        <h1 style={{ margin: 0, color: theme.primary, fontSize: '28px' }}>✅ Tasks</h1>
+        <h1 style={{ margin: 0, color: theme.primary, fontSize: '28px' }}>Focus</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
             { icon: '🔍', action: () => setShowFilters(!showFilters), active: showFilters },
@@ -600,6 +715,31 @@ const moveTask = (sourceId: number, targetId: number) => {
           0%, 100% { opacity: 0.8; transform: scale(1); }
           50% { opacity: 0.3; transform: scale(0.8); }
         }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+          to { opacity: 0; pointer-events: none; }
+        }
+        @keyframes glow {
+          0% { text-shadow: 0 0 30px rgba(100, 181, 246, 0.3); }
+          100% { text-shadow: 0 0 50px rgba(100, 181, 246, 0.6), 0 0 70px rgba(100, 181, 246, 0.3); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+
         * {
           -webkit-user-select: none;
           -moz-user-select: none;
