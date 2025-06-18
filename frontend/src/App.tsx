@@ -71,7 +71,10 @@ const styles = {
     minHeight: '44px',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    WebkitAppearance: 'none',
+    MozAppearance: 'textfield',
+    appearance: 'none'
   },
   button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
     padding: '12px 16px', 
@@ -596,7 +599,15 @@ const moveTask = (sourceId: number, targetId: number) => {
             {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
           <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})} 
-                 style={{...styles.input, colorScheme: 'dark'}} />
+                style={{
+                  ...styles.input, 
+                  colorScheme: 'dark',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'textfield',
+                  appearance: 'none',
+                  position: 'relative',
+                  paddingRight: '40px'
+                }} />
         </div>
         <input placeholder="タグ (カンマ区切り)" value={newTask.tags} onChange={(e) => setNewTask({...newTask, tags: e.target.value})} style={{...styles.input, marginBottom: '12px'}} />
         <button onClick={addTask} disabled={!newTask.title.trim()} style={{...styles.button('primary'), width: '100%', minHeight: '48px'}}>➕ タスクを追加</button>
@@ -764,6 +775,49 @@ const moveTask = (sourceId: number, targetId: number) => {
         select option:checked {
           background-color: #64b5f6 !important;
           color: #ffffff !important;
+        }
+
+        input[type="date"] {
+          -webkit-appearance: none !important;
+          -moz-appearance: textfield !important;
+          appearance: none !important;
+          background-color: rgba(255, 255, 255, 0.05) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-radius: 12px !important;
+          padding: 12px !important;
+          font-size: 16px !important;
+          backdrop-filter: blur(10px) !important;
+          -webkit-backdrop-filter: blur(10px) !important;
+          letter-spacing: normal !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+          font-variant-numeric: tabular-nums !important;
+        }
+
+        /* 日付入力の値の表示調整 */
+        input[type="date"]::-webkit-datetime-edit {
+          color: #ffffff !important;
+          letter-spacing: 0.5px !important;
+        }
+
+        input[type="date"]::-webkit-datetime-edit-year-field {
+          color: #ffffff !important;
+          padding: 0 2px !important;
+        }
+
+        input[type="date"]::-webkit-datetime-edit-month-field {
+          color: #ffffff !important;
+          padding: 0 2px !important;
+        }
+
+        input[type="date"]::-webkit-datetime-edit-day-field {
+          color: #ffffff !important;
+          padding: 0 2px !important;
+        }
+
+        input[type="date"]::-webkit-datetime-edit-text {
+          color: #b0b0b0 !important;
+          padding: 0 1px !important;
         }
       `}</style>
     </div>
