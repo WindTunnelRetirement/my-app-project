@@ -804,86 +804,105 @@ const moveTask = (sourceId: number, targetId: number) => {
         /* モバイルでの表示調整 */
         @media (max-width: 767px) {
           input[type="date"] {
-            /* モバイルでもカスタムスタイルを適用 */
+            /* モバイルではネイティブの日付ピッカーを使用 */
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
             appearance: none !important;
-            /* カレンダーアイコンを追加 */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M14 0H2C.9 0 0 .9 0 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zM2 1h12c.6 0 1 .4 1 1v2H1V2c0-.6.4-1 1-1zm13 13c0 .6-.4 1-1 1H2c-.6 0-1-.4-1-1V5h14v9z"/><path d="M4 7h1v1H4V7zm2 0h1v1H6V7zm2 0h1v1H8V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM4 9h1v1H4V9zm2 0h1v1H6V9zm2 0h1v1H8V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9z"/></svg>') !important;
-            background-repeat: no-repeat !important;
-            background-position: right 12px center !important;
-            background-size: 16px 16px !important;
-            padding-right: 40px !important;
-            /* テキストの色を強制的に白に */
+            
+            /* 背景とスタイル */
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 12px !important;
+            padding: 14px 16px !important;
+            font-size: 16px !important;
             color: #ffffff !important;
+            
+            /* カレンダーアイコンを追加 */
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 18px 18px !important;
+            padding-right: 50px !important;
+            
+            /* テキストの色を強制 */
             -webkit-text-fill-color: #ffffff !important;
             text-shadow: none !important;
+            
+            /* フォーカス時のスタイル */
+            outline: none !important;
+            transition: all 0.3s ease !important;
           }
           
-          /* モバイルでの日付値表示 */
+          input[type="date"]:focus {
+            border-color: #64b5f6 !important;
+            box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2) !important;
+          }
+          
+          /* モバイルでの日付値表示の改善 */
           input[type="date"]::-webkit-datetime-edit {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             opacity: 1 !important;
+            padding: 0 !important;
+            font-size: 16px !important;
+            line-height: 1.2 !important;
+          }
+          
+          input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-year-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
+            font-weight: 500 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-month-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
+            font-weight: 500 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-day-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
+            font-weight: 500 !important;
           }
           
-          input[type="date"]::-webkit-datetime-edit-text {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-          }
-          
-          /* 空の時のプレースホルダー効果 */
-          input[type="date"]:not(:valid):after {
-            content: "年/月/日";
-            color: #b0b0b0;
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-          }
-        }
-
-        /* 日付入力の値の表示調整（デスクトップのみ） */
-        @media (min-width: 768px) {
-          input[type="date"]::-webkit-datetime-edit {
-            color: #ffffff !important;
-            letter-spacing: 0.5px !important;
-          }
-
-          input[type="date"]::-webkit-datetime-edit-year-field {
-            color: #ffffff !important;
-            padding: 0 2px !important;
-          }
-
-          input[type="date"]::-webkit-datetime-edit-month-field {
-            color: #ffffff !important;
-            padding: 0 2px !important;
-          }
-
-          input[type="date"]::-webkit-datetime-edit-day-field {
-            color: #ffffff !important;
-            padding: 0 2px !important;
-          }
-
           input[type="date"]::-webkit-datetime-edit-text {
             color: #b0b0b0 !important;
-            padding: 0 1px !important;
+            -webkit-text-fill-color: #b0b0b0 !important;
+            font-weight: 400 !important;
+          }
+          
+          /* 値が空の場合のプレースホルダー的表示 */
+          input[type="date"]:not(:focus):invalid {
+            color: #b0b0b0 !important;
+            -webkit-text-fill-color: #b0b0b0 !important;
+          }
+          
+          input[type="date"]:not(:focus):invalid:before {
+            content: '期限日を選択';
+            color: #b0b0b0 !important;
+            position: absolute;
+            pointer-events: none;
+          }
+          
+          /* Androidでの追加調整 */
+          input[type="date"]::-webkit-calendar-picker-indicator {
+            background: transparent !important;
+            bottom: 0 !important;
+            color: transparent !important;
+            cursor: pointer !important;
+            height: auto !important;
+            left: 0 !important;
+            position: absolute !important;
+            right: 0 !important;
+            top: 0 !important;
+            width: auto !important;
+            opacity: 0 !important;
           }
         }
       `}</style>
