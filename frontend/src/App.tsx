@@ -599,6 +599,7 @@ const moveTask = (sourceId: number, targetId: number) => {
             {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
           <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})} 
+                placeholder="期限日を選択"
                 style={{
                   ...styles.input, 
                   colorScheme: 'dark',
@@ -685,6 +686,7 @@ const moveTask = (sourceId: number, targetId: number) => {
                       </select>
                     </div>
                     <input type="date" value={editData.dueDate || ''} onChange={(e) => setEditData({...editData, dueDate: e.target.value})} 
+                           placeholder="期限日を選択"
                            style={{...styles.input, marginBottom: '8px', colorScheme: 'dark'}} />
                     <input placeholder="タグ (カンマ区切り)" value={editData.tags || ''} onChange={(e) => setEditData({...editData, tags: e.target.value})} style={{...styles.input, marginBottom: '8px'}} />
                     <div style={{ display: 'flex', gap: '8px' }}>
