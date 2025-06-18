@@ -778,9 +778,6 @@ const moveTask = (sourceId: number, targetId: number) => {
         }
 
         input[type="date"] {
-          -webkit-appearance: none !important;
-          -moz-appearance: textfield !important;
-          appearance: none !important;
           background-color: rgba(255, 255, 255, 0.05) !important;
           color: #ffffff !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -789,35 +786,73 @@ const moveTask = (sourceId: number, targetId: number) => {
           font-size: 16px !important;
           backdrop-filter: blur(10px) !important;
           -webkit-backdrop-filter: blur(10px) !important;
-          letter-spacing: normal !important;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
           font-variant-numeric: tabular-nums !important;
+          position: relative !important;
+          /* デスクトップでのみappearanceを調整 */
         }
 
-        /* 日付入力の値の表示調整 */
-        input[type="date"]::-webkit-datetime-edit {
-          color: #ffffff !important;
-          letter-spacing: 0.5px !important;
+        /* デスクトップ（大画面）での表示調整 */
+        @media (min-width: 768px) {
+          input[type="date"] {
+            -webkit-appearance: none !important;
+            -moz-appearance: textfield !important;
+            appearance: none !important;
+          }
         }
 
-        input[type="date"]::-webkit-datetime-edit-year-field {
-          color: #ffffff !important;
-          padding: 0 2px !important;
+        /* モバイルでの表示調整 */
+        @media (max-width: 767px) {
+          input[type="date"] {
+            /* モバイルではネイティブの見た目を保持 */
+            -webkit-appearance: auto !important;
+            -moz-appearance: auto !important;
+            appearance: auto !important;
+            /* プレースホルダー的な表示を追加 */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M14 0H2C.9 0 0 .9 0 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V2c0-1.1-.9-2-2-2zM2 1h12c.6 0 1 .4 1 1v2H1V2c0-.6.4-1 1-1zm13 13c0 .6-.4 1-1 1H2c-.6 0-1-.4-1-1V5h14v9z"/><path d="M4 7h1v1H4V7zm2 0h1v1H6V7zm2 0h1v1H8V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM4 9h1v1H4V9zm2 0h1v1H6V9zm2 0h1v1H8V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9z"/></svg>') !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+            background-size: 16px 16px !important;
+            padding-right: 40px !important;
+          }
+          
+          /* モバイルで値が空の時のプレースホルダー */
+          input[type="date"]:invalid {
+            color: #b0b0b0 !important;
+          }
+          
+          input[type="date"]:invalid:before {
+            content: "日付を選択" !important;
+            color: #b0b0b0 !important;
+          }
         }
 
-        input[type="date"]::-webkit-datetime-edit-month-field {
-          color: #ffffff !important;
-          padding: 0 2px !important;
-        }
+        /* 日付入力の値の表示調整（デスクトップのみ） */
+        @media (min-width: 768px) {
+          input[type="date"]::-webkit-datetime-edit {
+            color: #ffffff !important;
+            letter-spacing: 0.5px !important;
+          }
 
-        input[type="date"]::-webkit-datetime-edit-day-field {
-          color: #ffffff !important;
-          padding: 0 2px !important;
-        }
+          input[type="date"]::-webkit-datetime-edit-year-field {
+            color: #ffffff !important;
+            padding: 0 2px !important;
+          }
 
-        input[type="date"]::-webkit-datetime-edit-text {
-          color: #b0b0b0 !important;
-          padding: 0 1px !important;
+          input[type="date"]::-webkit-datetime-edit-month-field {
+            color: #ffffff !important;
+            padding: 0 2px !important;
+          }
+
+          input[type="date"]::-webkit-datetime-edit-day-field {
+            color: #ffffff !important;
+            padding: 0 2px !important;
+          }
+
+          input[type="date"]::-webkit-datetime-edit-text {
+            color: #b0b0b0 !important;
+            padding: 0 1px !important;
+          }
         }
       `}</style>
     </div>
