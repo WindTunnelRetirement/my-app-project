@@ -806,7 +806,7 @@ const moveTask = (sourceId: number, targetId: number) => {
         /* モバイルでの表示調整 */
         @media (max-width: 767px) {
           input[type="date"] {
-            /* モバイルでもネイティブの外観を維持しつつスタイリング */
+            /* モバイルでネイティブの外観を維持 */
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
             appearance: none !important;
@@ -819,21 +819,33 @@ const moveTask = (sourceId: number, targetId: number) => {
             font-size: 16px !important;
             color: #ffffff !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
-            
-            /* カレンダーアイコンを追加 */
-            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
-            background-repeat: no-repeat !important;
-            background-position: right 14px center !important;
-            background-size: 18px 18px !important;
-            padding-right: 50px !important;
+            position: relative !important;
+          }
+          
+          /* 値が入力されていない場合のプレースホルダー風表示 */
+          input[type="date"]:not(:focus):invalid {
+            color: transparent !important;
+          }
+          
+          input[type="date"]:not(:focus):invalid:before {
+            content: '📅 期限日を選択';
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b0b0b0 !important;
+            pointer-events: none;
+            font-size: 16px;
+            z-index: 1;
           }
           
           input[type="date"]:focus {
             border-color: #64b5f6 !important;
             box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2) !important;
+            color: #ffffff !important;
           }
           
-          /* 日付の各部分の表示を強制 */
+          /* 日付の各部分の表示 */
           input[type="date"]::-webkit-datetime-edit {
             color: #ffffff !important;
             font-size: 16px !important;
@@ -861,35 +873,22 @@ const moveTask = (sourceId: number, targetId: number) => {
             padding: 0 2px !important;
           }
           
-          /* カレンダーピッカーボタンを透明化して全体をクリック可能に */
+          /* カレンダーピッカーボタン */
           input[type="date"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: auto;
-            height: auto;
-            color: transparent;
-            background: transparent;
-            cursor: pointer;
-            opacity: 0;
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            background-size: 18px 18px !important;
+            width: 40px !important;
+            height: 40px !important;
+            margin-left: 8px !important;
+            cursor: pointer !important;
+            opacity: 0.7 !important;
+            filter: none !important;
           }
           
-          /* 空の状態でのプレースホルダー表示 */
-          input[type="date"]:invalid {
-            position: relative;
-          }
-          
-          input[type="date"]:invalid:before {
-            content: '年/月/日を選択';
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #b0b0b0;
-            pointer-events: none;
-            font-size: 16px;
+          input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1 !important;
           }
         }
       `}</style>
