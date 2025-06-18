@@ -599,6 +599,7 @@ const moveTask = (sourceId: number, targetId: number) => {
             {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
           <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})} 
+                placeholder="期限日を選択"
                 style={{
                   ...styles.input, 
                   colorScheme: 'dark',
@@ -685,6 +686,7 @@ const moveTask = (sourceId: number, targetId: number) => {
                       </select>
                     </div>
                     <input type="date" value={editData.dueDate || ''} onChange={(e) => setEditData({...editData, dueDate: e.target.value})} 
+                           placeholder="期限日を選択"
                            style={{...styles.input, marginBottom: '8px', colorScheme: 'dark'}} />
                     <input placeholder="タグ (カンマ区切り)" value={editData.tags || ''} onChange={(e) => setEditData({...editData, tags: e.target.value})} style={{...styles.input, marginBottom: '8px'}} />
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -801,30 +803,50 @@ const moveTask = (sourceId: number, targetId: number) => {
           }
         }
 
-        /* iOS Safari専用の調整 */
+        /* モバイルでの表示調整 */
         @media (max-width: 767px) {
           input[type="date"] {
-            /* iOSでのネイティブ表示を優先 */
-            -webkit-appearance: textfield !important;
-            appearance: textfield !important;
+            /* モバイルではネイティブの日付ピッカーを使用 */
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
             
-            /* 基本スタイル */
+            /* 背景とスタイル */
             background-color: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             border-radius: 12px !important;
-            padding: 14px 16px !important;
+            padding: 14px 20px 14px 16px !important;
             font-size: 16px !important;
             color: #ffffff !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+            min-width: 160px !important;
+            height: 48px !important;
             
-            /* iOSでのテキスト表示を強制 */
+            /* カレンダーアイコンを追加 */
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
+            background-repeat: no-repeat !important;
+            background-position: right 14px center !important;
+            background-size: 18px 18px !important;
+            
+            /* テキストの色を強制 */
             -webkit-text-fill-color: #ffffff !important;
-            -webkit-opacity: 1 !important;
-            opacity: 1 !important;
+            text-shadow: none !important;
             
             /* フォーカス時のスタイル */
             outline: none !important;
             transition: all 0.3s ease !important;
+            
+            /* プレースホルダー風のテキスト */
+            position: relative !important;
+          }
+          
+          /* 空の値の時にプレースホルダーテキストを表示 */
+          input[type="date"]:invalid {
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>'), linear-gradient(to right, transparent 0%, transparent 85%, rgba(255,255,255,0) 85%), url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20"><text x="0" y="15" font-family="-apple-system, BlinkMacSystemFont" font-size="16" fill="%23b0b0b0">📅 期限日</text></svg>') !important;
+            background-repeat: no-repeat, no-repeat, no-repeat !important;
+            background-position: right 14px center, 0 0, left 16px center !important;
+            background-size: 18px 18px, 100% 100%, auto !important;
+            color: transparent !important;
+            -webkit-text-fill-color: transparent !important;
           }
           
           input[type="date"]:focus {
@@ -832,127 +854,64 @@ const moveTask = (sourceId: number, targetId: number) => {
             box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2) !important;
           }
           
-          /* iOS Safariでの日付表示部分の調整 */
+          /* 値が入力された時の表示 */
+          input[type="date"]:valid {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+          }
+          
+          /* モバイルでの日付値表示の改善 */
           input[type="date"]::-webkit-datetime-edit {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             opacity: 1 !important;
-            -webkit-opacity: 1 !important;
             padding: 0 !important;
             font-size: 16px !important;
-            line-height: 1.4 !important;
-            display: inline-block !important;
+            line-height: 1.2 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-fields-wrapper {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
-            opacity: 1 !important;
-            -webkit-opacity: 1 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-year-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             font-weight: 500 !important;
-            opacity: 1 !important;
-            -webkit-opacity: 1 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-month-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             font-weight: 500 !important;
-            opacity: 1 !important;
-            -webkit-opacity: 1 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-day-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             font-weight: 500 !important;
-            opacity: 1 !important;
-            -webkit-opacity: 1 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-text {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
+            color: #b0b0b0 !important;
+            -webkit-text-fill-color: #b0b0b0 !important;
             font-weight: 400 !important;
-            opacity: 1 !important;
-            -webkit-opacity: 1 !important;
           }
           
-          /* カレンダーピッカーアイコンの調整 */
+          /* Androidでの追加調整 */
           input[type="date"]::-webkit-calendar-picker-indicator {
-            color: #ffffff !important;
             background: transparent !important;
+            bottom: 0 !important;
+            color: transparent !important;
             cursor: pointer !important;
-            font-size: 16px !important;
-            opacity: 0.7 !important;
-            margin-left: 8px !important;
-            filter: invert(1) !important;
-          }
-          
-          input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            opacity: 1 !important;
-          }
-          
-          /* 値が設定されていない場合の表示調整 */
-          input[type="date"]:not(:focus):not([value]):not(:invalid) {
-            color: #b0b0b0 !important;
-            -webkit-text-fill-color: #b0b0b0 !important;
-          }
-          
-          /* プレースホルダー風の表示（iOS Safari用） */
-          input[type="date"]:not([value]):before {
-            content: "期限日を選択" !important;
-            color: #b0b0b0 !important;
-            -webkit-text-fill-color: #b0b0b0 !important;
+            height: auto !important;
+            left: 0 !important;
             position: absolute !important;
-            left: 16px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            pointer-events: none !important;
-            font-size: 16px !important;
-          }
-          
-          /* 値が設定されている場合はプレースホルダーを非表示 */
-          input[type="date"][value]:before,
-          input[type="date"]:focus:before {
-            display: none !important;
-          }
-        }
-        
-        /* iOS Safari 15+での追加調整 */
-        @supports (-webkit-touch-callout: none) {
-          @media (max-width: 767px) {
-            input[type="date"] {
-              /* iOS Safari固有の調整 */
-              -webkit-text-fill-color: #ffffff !important;
-              color: #ffffff !important;
-              opacity: 1 !important;
-              -webkit-opacity: 1 !important;
-              
-              /* 背景を再調整 */
-              background-color: rgba(255, 255, 255, 0.1) !important;
-              background-image: none !important;
-            }
-            
-            /* iOS Safariでの全ての日付関連要素を白色に */
-            input[type="date"]::-webkit-datetime-edit,
-            input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-            input[type="date"]::-webkit-datetime-edit-year-field,
-            input[type="date"]::-webkit-datetime-edit-month-field,
-            input[type="date"]::-webkit-datetime-edit-day-field,
-            input[type="date"]::-webkit-datetime-edit-text {
-              color: #ffffff !important;
-              -webkit-text-fill-color: #ffffff !important;
-              opacity: 1 !important;
-              -webkit-opacity: 1 !important;
-              text-shadow: none !important;
-              background: transparent !important;
-            }
+            right: 0 !important;
+            top: 0 !important;
+            width: auto !important;
+            opacity: 0 !important;
           }
         }
       `}</style>
