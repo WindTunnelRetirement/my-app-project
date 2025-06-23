@@ -1,5 +1,21 @@
 // API基本設定
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+export const API_CONFIG = {
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  ENDPOINTS: {
+    AUTH: {
+      LOGIN: '/auth/login',
+      REGISTER: '/auth/register',
+      ME: '/auth/me',
+      LOGOUT: '/auth/logout',
+    },
+    TASKS: {
+      INDEX: '/tasks',
+      CREATE: '/tasks',
+      UPDATE: (id: number) => `/tasks/${id}`,
+      DELETE: (id: number) => `/tasks/${id}`,
+      TOGGLE: (id: number) => `/tasks/${id}/toggle`,
+    },
+  },
 
 // API呼び出し用のヘルパー関数
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {

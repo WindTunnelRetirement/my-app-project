@@ -1,7 +1,12 @@
 class Task < ApplicationRecord
+  # 関連付け
+  belongs_to :user
+  
+  # バリデーション
   validates :title, presence: true
   validates :priority, inclusion: { in: [1, 2, 3] } # 1=高, 2=中, 3=低
   validates :category, presence: true
+  validates :user_id, presence: true
   
   # スコープを定義してフィルタリングを簡単に
   scope :by_priority, ->(priority) { where(priority: priority) }
