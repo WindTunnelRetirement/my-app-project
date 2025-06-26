@@ -20,6 +20,49 @@ interface Notification {
   timestamp: number;
 }
 
+const StarField = React.memo(() => {
+  // useStateの初期化でstatic参照を使用
+  const [stars] = useState<Star[]>(() => {
+    return Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.8 + 0.2,
+      twinkleDelay: Math.random() * 2
+    }));
+  });
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: 0
+    }}>
+      {stars.map(star => (
+        <div
+          key={star.id}
+          style={{
+            position: 'absolute',
+            left: `${star.x}%`,
+            top: `${star.y}%`,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            backgroundColor: '#ffffff',
+            borderRadius: '50%',
+            opacity: star.opacity,
+            animation: `twinkle 2s infinite ${star.twinkleDelay}s ease-in-out alternate`,
+          }}
+        />
+      ))}
+    </div>
+  );
+});
+
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,10 +156,6 @@ interface Star {
   twinkleDelay: number;
 }
 
-// 星空エフェクト用のコンポーネントを追加（メインコンポーネント内の最初に配置）
-const StarField = () => {
-  const [stars, setStars] = useState<Star[]>([]);
-
   // ローディング画面用のuseEffect
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,50 +164,6 @@ const StarField = () => {
 
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    // if (darkMode) の条件分岐を削除して、常に星を表示
-    const newStars = Array.from({ length: 100 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      opacity: Math.random() * 0.8 + 0.2,
-      twinkleDelay: Math.random() * 2
-    }));
-    setStars(newStars);
-  }, []);
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      pointerEvents: 'none',
-      zIndex: 0
-    }}>
-
-      {stars.map(star => (
-        <div
-          key={star.id}
-          style={{
-            position: 'absolute',
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            backgroundColor: '#ffffff',
-            borderRadius: '50%',
-            opacity: star.opacity,
-            animation: `twinkle 2s infinite ${star.twinkleDelay}s ease-in-out alternate`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 // ローディング画面コンポーネント
 const LoadingScreen = () => {
