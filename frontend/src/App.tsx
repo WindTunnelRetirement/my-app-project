@@ -23,13 +23,14 @@ interface Notification {
 const StarField = React.memo(() => {
   // useStateの初期化でstatic参照を使用
   const [stars] = useState<Star[]>(() => {
-    return Array.from({ length: 100 }, (_, i) => ({
+    return Array.from({ length: 150 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      opacity: Math.random() * 0.8 + 0.2,
-      twinkleDelay: Math.random() * 2
+      size: Math.random() * 4 + 0.5,
+      opacity: Math.random() * 0.9 + 0.1,
+      twinkleDelay: Math.random() * 3,
+      color: ['#ffffff', '#64b5f6', '#81c784', '#ffb74d'][Math.floor(Math.random() * 4)]
     }));
   });
   
@@ -41,7 +42,8 @@ const StarField = React.memo(() => {
       width: '100%',
       height: '100%',
       pointerEvents: 'none',
-      zIndex: 0
+      zIndex: 0,
+      overflow: 'hidden'
     }}>
       {stars.map(star => (
         <div
@@ -52,13 +54,30 @@ const StarField = React.memo(() => {
             top: `${star.y}%`,
             width: `${star.size}px`,
             height: `${star.size}px`,
-            backgroundColor: '#ffffff',
+            backgroundColor: star.color,
             borderRadius: '50%',
             opacity: star.opacity,
-            animation: `twinkle 2s infinite ${star.twinkleDelay}s ease-in-out alternate`,
+            animation: `twinkle 3s infinite ${star.twinkleDelay}s ease-in-out alternate, float 8s infinite ${star.twinkleDelay * 2}s ease-in-out alternate`,
+            boxShadow: `0 0 ${star.size * 3}px ${star.color}40`,
+            filter: `blur(${star.size > 3 ? 0.5 : 0}px)`
           }}
         />
       ))}
+      
+      {/* 流れ星エフェクト */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '20%',
+          left: '-10px',
+          width: '2px',
+          height: '2px',
+          backgroundColor: '#ffffff',
+          borderRadius: '50%',
+          animation: 'shootingStar 8s infinite linear',
+          boxShadow: '0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 30px #ffffff'
+        }}
+      />
     </div>
   );
 });
@@ -725,17 +744,15 @@ const moveTask = (sourceId: number, targetId: number) => {
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(30px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes fadeOut {
-          to { opacity: 0; pointer-events: none; }
+          to { opacity: 0; pointer-events: none; transform: scale(0.95); }
         }
         @keyframes glow {
-          0% { text-shadow: 0 0 30px rgba(100, 181, 246, 0.3); }
-          100% { text-shadow: 0 0 50px rgba(100, 181, 246, 0.6), 0 0 70px rgba(100, 181, 246, 0.3); }
-        }
-        @keyframes slideUp {
+          0% { text-shadow: 0 0 30px rgba(100, 181, 246, 0.3), 0 0 60px rgba(100, 181, 246, 0.1); }
+          100% { text-shadow: 0 0 50px rgba(100, 181, 246, 0.6), 0 0 const StarField = React.memo(() => {mes slideUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
