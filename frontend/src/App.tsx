@@ -66,7 +66,7 @@ const StarField = React.memo(() => {
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newTask, setNewTask] = useState({ title: '', priority: 2, category: 'general', dueDate: '', tags: '' });
+  const [newTask, setNewTask] = useState({ title: '', priority: 3, category: 'general', dueDate: '', tags: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
   const [showFilters, setShowFilters] = useState(false);
