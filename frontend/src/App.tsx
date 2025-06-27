@@ -1,24 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-interface Task {
-  id: number;
-  title: string;
-  done: boolean;
-  priority: number;
-  category: string;
-  created_at: string;
-  updated_at: string;
-  dueDate?: string;
-  tags: string[];
-  customOrder?: number;
-}
-
-interface Notification {
-  id: number;
-  type: 'success' | 'error' | 'info';
-  message: string;
-  timestamp: number;
-}
+import { Task, Notification, Star, Filters, NewTask } from './types';
 
 const StarField = React.memo(() => {
   // useStateの初期化でstatic参照を使用
@@ -85,11 +66,11 @@ const StarField = React.memo(() => {
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newTask, setNewTask] = useState({ title: '', priority: 3, category: 'general', dueDate: '', tags: '' });
+  const [newTask, setNewTask] = useState<NewTask>({ title: '', priority: 3, category: 'general', dueDate: '', tags: '' });
+  const [filters, setFilters] = useState<Filters>({ status: 'all', priority: null, category: '', search: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Task>>({});
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({ status: 'all', priority: null, category: '', search: '' });
   const [sortBy, setSortBy] = useState('priority');
   const [draggedTask, setDraggedTask] = useState<number | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
@@ -165,15 +146,6 @@ const styles = {
     transition: 'all 0.3s ease'
   }
 };
-
-interface Star {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-  twinkleDelay: number;
-}
 
   // ローディング画面用のuseEffect
   useEffect(() => {
@@ -559,12 +531,26 @@ const moveTask = (sourceId: number, targetId: number) => {
         <div style={styles.card}>
           <input placeholder="検索..." value={filters.search} onChange={(e) => setFilters({...filters, search: e.target.value})} style={{...styles.input, marginBottom: '12px'}} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
-            <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})} style={styles.input}>
+            <select value={filters.status} onChange={(e) => setFilters({...filters, status: e.target.value})} style={{...styles.input,
+              backgroundColor: 'rgba(26, 26, 46, 0.95)',
+              color: '#ffffff',
+              backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              backgroundSize: '12px'
+            }}>
               {[['all', 'すべて'], ['pending', '未完了'], ['completed', '完了済み']].map(([value, label]) => 
                 <option key={value} value={value}>{label}</option>
               )}
             </select>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={styles.input}>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{...styles.input,
+              backgroundColor: 'rgba(26, 26, 46, 0.95)',
+              color: '#ffffff',
+              backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              backgroundSize: '12px'
+            }}>
               {[['priority', '優先度順'], ['created_at', '作成日順'], ['dueDate', '期限順'], ['custom', 'カスタム順序']].map(([value, label]) => 
                 <option key={value} value={value}>{label}</option>
               )}
@@ -606,16 +592,32 @@ const moveTask = (sourceId: number, targetId: number) => {
       <div style={styles.card}>
         <input placeholder="新しいタスク..." value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} onKeyPress={(e) => e.key === 'Enter' && addTask()} style={{...styles.input, marginBottom: '12px'}} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px', marginBottom: '12px' }}>
-          <select value={newTask.priority} onChange={(e) => setNewTask({...newTask, priority: Number(e.target.value)})} style={styles.input}>
+          <select value={newTask.priority} onChange={(e) => setNewTask({...newTask, priority: Number(e.target.value)})} style={{...styles.input,
+            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+            color: '#ffffff',
+            backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '12px'
+          }}>
             {Object.entries(configs.priority).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
-          <select value={newTask.category} onChange={(e) => setNewTask({...newTask, category: e.target.value})} style={styles.input}>
+          <select value={newTask.category} onChange={(e) => setNewTask({...newTask, category: e.target.value})} style={{...styles.input,
+            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+            color: '#ffffff',
+            backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '12px'
+          }}>
             {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
           </select>
           <input type="date" value={newTask.dueDate} onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})} 
                 placeholder="期限日を選択"
                 style={{
                   ...styles.input, 
+                  backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                  color: '#ffffff',
                   colorScheme: 'dark',
                   WebkitAppearance: 'none',
                   MozAppearance: 'textfield',
@@ -692,10 +694,24 @@ const moveTask = (sourceId: number, targetId: number) => {
                   <div style={{ marginBottom: '12px' }}>
                     <input value={editData.title || ''} onChange={(e) => setEditData({...editData, title: e.target.value})} onKeyPress={(e) => e.key === 'Enter' && saveEdit()} style={{...styles.input, marginBottom: '8px'}} autoFocus />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                      <select value={editData.priority || 2} onChange={(e) => setEditData({...editData, priority: Number(e.target.value)})} style={styles.input}>
+                      <select value={editData.priority || 2} onChange={(e) => setEditData({...editData, priority: Number(e.target.value)})} style={{...styles.input,
+                        backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                        color: '#ffffff',
+                        backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                        backgroundSize: '12px'
+                      }}>
                         {Object.entries(configs.priority).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
                       </select>
-                      <select value={editData.category || 'general'} onChange={(e) => setEditData({...editData, category: e.target.value})} style={styles.input}>
+                      <select value={editData.category || 'general'} onChange={(e) => setEditData({...editData, category: e.target.value})} style={{...styles.input,
+                        backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                        color: '#ffffff',
+                        backgroundImage: `url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="%23ffffff" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>')`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                        backgroundSize: '12px'
+                      }}>
                         {Object.entries(configs.category).map(([key, config]) => <option key={key} value={key}>{config.emoji} {config.name}</option>)}
                       </select>
                     </div>
@@ -777,51 +793,14 @@ const moveTask = (sourceId: number, targetId: number) => {
           -ms-user-select: text !important;
           user-select: text !important;
         }
-        select {
-          background-color: rgba(255, 255, 255, 0.1) !important;
-          color: #ffffff !important;
-        }
-        select option {
-          background-color: #1a1a2e !important;
-          color: #ffffff !important;
-          padding: 8px !important;
-        }
-        select option:checked {
-          background-color: #64b5f6 !important;
-          color: #ffffff !important;
-        }
-
-        input[type="date"] {
-          background-color: rgba(255, 255, 255, 0.05) !important;
-          color: #ffffff !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          border-radius: 12px !important;
-          padding: 12px !important;
-          font-size: 16px !important;
-          backdrop-filter: blur(10px) !important;
-          -webkit-backdrop-filter: blur(10px) !important;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
-          font-variant-numeric: tabular-nums !important;
-          position: relative !important;
-          /* デスクトップでのみappearanceを調整 */
-        }
-
-        /* デスクトップ（大画面）での表示調整 */
-        @media (min-width: 768px) {
-          input[type="date"] {
-            -webkit-appearance: none !important;
-            -moz-appearance: textfield !important;
-            appearance: none !important;
-          }
-        }
 
         /* モバイルでの表示調整 */
         @media (max-width: 767px) {
           input[type="date"] {
-            /* モバイルではネイティブの日付ピッカーを使用 */
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            appearance: none !important;
+            /* モバイル固有の調整 */
+            padding: 14px 20px 14px 16px !important;
+            min-width: 160px !important;
+            height: 48px !important;
             
             /* 背景とスタイル */
             background-color: rgba(255, 255, 255, 0.1) !important;
@@ -851,14 +830,19 @@ const moveTask = (sourceId: number, targetId: number) => {
             position: relative !important;
           }
           
-          /* 空の値の時にプレースホルダーテキストを表示 */
           input[type="date"]:invalid {
-            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>'), linear-gradient(to right, transparent 0%, transparent 85%, rgba(255,255,255,0) 85%), url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20"><text x="0" y="15" font-family="-apple-system, BlinkMacSystemFont" font-size="16" fill="%23b0b0b0">📅 期限日</text></svg>') !important;
-            background-repeat: no-repeat, no-repeat, no-repeat !important;
-            background-position: right 14px center, 0 0, left 16px center !important;
-            background-size: 18px 18px, 100% 100%, auto !important;
-            color: transparent !important;
-            -webkit-text-fill-color: transparent !important;
+            color: #b0b0b0 !important;
+            -webkit-text-fill-color: #b0b0b0 !important;
+          }
+
+          input[type="date"]:invalid:before {
+            content: "📅 期限日を選択";
+            color: #b0b0b0;
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
           }
           
           input[type="date"]:focus {
