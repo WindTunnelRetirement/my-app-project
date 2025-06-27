@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task, Notification, Star, Filters, NewTask } from './types';
+import { configs } from './constants/configs';
 
 const StarField = React.memo(() => {
   // useStateの初期化でstatic参照を使用
@@ -78,11 +79,6 @@ const App = () => {
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedForSwap, setSelectedForSwap] = useState<number | null>(null);
-
-  const configs = {
-    priority: { 1: { name: '高', color: '#ff4757', emoji: '🔥' }, 2: { name: '中', color: '#ffa502', emoji: '⚡' }, 3: { name: '低', color: '#5352ed', emoji: '💫' } },
-    category: { general: { name: '一般', color: '#6c5ce7', emoji: '📝' }, work: { name: '仕事', color: '#00b894', emoji: '💼' }, personal: { name: 'プライベート', color: '#fd79a8', emoji: '🏠' }, shopping: { name: '買い物', color: '#fdcb6e', emoji: '🛒' }, health: { name: '健康', color: '#00cec9', emoji: '💪' } }
-  };
 
 // テーマ設定を以下に置き換え
 const theme = {
@@ -793,77 +789,30 @@ const moveTask = (sourceId: number, targetId: number) => {
           -ms-user-select: text !important;
           user-select: text !important;
         }
-
-        /* モバイルでの表示調整 */
+/* モバイルでの表示調整 */
         @media (max-width: 767px) {
           input[type="date"] {
-            /* モバイル固有の調整 */
-            padding: 14px 20px 14px 16px !important;
-            min-width: 160px !important;
-            height: 48px !important;
-            
-            /* 背景とスタイル */
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 12px !important;
-            padding: 14px 20px 14px 16px !important;
+            background-color: rgba(26, 26, 46, 0.95) !important;
+            color: #ffffff !important;
+            padding: 12px 16px !important;
             font-size: 16px !important;
-            color: #ffffff !important;
-            min-width: 160px !important;
-            height: 48px !important;
+            min-height: 44px !important;
+            box-sizing: border-box !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
             
-            /* カレンダーアイコンを追加 */
-            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5 0zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
-            background-repeat: no-repeat !important;
-            background-position: right 14px center !important;
-            background-size: 18px 18px !important;
-            
-            /* テキストの色を強制 */
+            /* 日付テキストの表示を改善 */
             -webkit-text-fill-color: #ffffff !important;
-            text-shadow: none !important;
-            
-            /* フォーカス時のスタイル */
-            outline: none !important;
-            transition: all 0.3s ease !important;
-            
-            /* プレースホルダー風のテキスト */
-            position: relative !important;
+            text-align: left !important;
+            vertical-align: middle !important;
+            line-height: 1.4 !important;
           }
           
-          input[type="date"]:invalid {
-            color: #b0b0b0 !important;
-            -webkit-text-fill-color: #b0b0b0 !important;
-          }
-
-          input[type="date"]:invalid:before {
-            content: "📅 期限日を選択";
-            color: #b0b0b0;
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-          }
-          
-          input[type="date"]:focus {
-            border-color: #64b5f6 !important;
-            box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2) !important;
-          }
-          
-          /* 値が入力された時の表示 */
-          input[type="date"]:valid {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-          }
-          
-          /* モバイルでの日付値表示の改善 */
+          /* 日付入力フィールドの各部分 */
           input[type="date"]::-webkit-datetime-edit {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
-            opacity: 1 !important;
             padding: 0 !important;
-            font-size: 16px !important;
-            line-height: 1.2 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-fields-wrapper {
@@ -871,43 +820,37 @@ const moveTask = (sourceId: number, targetId: number) => {
             -webkit-text-fill-color: #ffffff !important;
           }
           
-          input[type="date"]::-webkit-datetime-edit-year-field {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            font-weight: 500 !important;
-          }
-          
-          input[type="date"]::-webkit-datetime-edit-month-field {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            font-weight: 500 !important;
-          }
-          
+          input[type="date"]::-webkit-datetime-edit-year-field,
+          input[type="date"]::-webkit-datetime-edit-month-field,
           input[type="date"]::-webkit-datetime-edit-day-field {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
-            font-weight: 500 !important;
           }
           
           input[type="date"]::-webkit-datetime-edit-text {
             color: #b0b0b0 !important;
             -webkit-text-fill-color: #b0b0b0 !important;
-            font-weight: 400 !important;
           }
           
-          /* Androidでの追加調整 */
+          /* カレンダーアイコンを維持 */
           input[type="date"]::-webkit-calendar-picker-indicator {
-            background: transparent !important;
-            bottom: 0 !important;
-            color: transparent !important;
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23ffffff" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>') !important;
+            background-size: 16px 16px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+            width: 20px !important;
+            height: 20px !important;
+            margin-left: 8px !important;
             cursor: pointer !important;
-            height: auto !important;
-            left: 0 !important;
-            position: absolute !important;
-            right: 0 !important;
-            top: 0 !important;
-            width: auto !important;
-            opacity: 0 !important;
+            opacity: 1 !important;
+            filter: none !important;
+          }
+          
+          /* フォーカス時の改善 */
+          input[type="date"]:focus {
+            border-color: #64b5f6 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2) !important;
           }
         }
       `}</style>
