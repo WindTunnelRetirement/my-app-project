@@ -16,7 +16,7 @@ COPY backend/Gemfile backend/Gemfile.lock ./
 
 COPY Gemfile Gemfile.lock ./
 
-RUN bundle install
+# RUN bundle install
 
 # 本番環境
 RUN bundle install --deployment --without development test
@@ -31,7 +31,7 @@ COPY . .
 RUN mkdir -p tmp/cache tmp/pids log && \
     chmod -R 777 tmp log
 
-ENV RAILS_ENV=development
+# ENV RAILS_ENV=development
 
 # 本番環境用の設定
 ENV RAILS_ENV=production
