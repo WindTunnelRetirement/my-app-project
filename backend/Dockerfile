@@ -14,7 +14,7 @@ RUN apt-get update -qq && \
 # 本番環境用
 COPY backend/Gemfile backend/Gemfile.lock ./
 
-COPY Gemfile Gemfile.lock ./
+# COPY Gemfile Gemfile.lock ./
 
 # RUN bundle install
 
