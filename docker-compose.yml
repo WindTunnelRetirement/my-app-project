@@ -18,8 +18,11 @@ services:
         HTTP_PROXY: http://proxy.denken.or.jp:911
         HTTPS_PROXY: http://proxy.denken.or.jp:911
     command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
+
+    # 本番環境用
     volumes:
       - ./backend:/app
+
     user: "${UID}:${GID}"
     ports:
       - "3000:3000"
@@ -29,6 +32,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      RAILS_ENV: development
 
   frontend:
     build: ./frontend

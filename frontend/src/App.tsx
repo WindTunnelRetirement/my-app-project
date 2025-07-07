@@ -1,68 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Task, Notification, Star, Filters, NewTask } from './types';
+import { Task, Notification, Filters, NewTask } from './types';
 import { configs } from './constants/configs';
-
-const StarField = React.memo(() => {
-  // useStateの初期化でstatic参照を使用
-  const [stars] = useState<Star[]>(() => {
-    return Array.from({ length: 150 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 0.5,
-      opacity: Math.random() * 0.9 + 0.1,
-      twinkleDelay: Math.random() * 3,
-      color: ['#ffffff', '#64b5f6', '#81c784', '#ffb74d'][Math.floor(Math.random() * 4)]
-    }));
-  });
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      pointerEvents: 'none',
-      zIndex: 0,
-      overflow: 'hidden'
-    }}>
-      {stars.map(star => (
-        <div
-          key={star.id}
-          style={{
-            position: 'absolute',
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            backgroundColor: star.color,
-            borderRadius: '50%',
-            opacity: star.opacity,
-            animation: `twinkle 3s infinite ${star.twinkleDelay}s ease-in-out alternate, float 8s infinite ${star.twinkleDelay * 2}s ease-in-out alternate`,
-            boxShadow: `0 0 ${star.size * 3}px ${star.color}40`,
-            filter: `blur(${star.size > 3 ? 0.5 : 0}px)`
-          }}
-        />
-      ))}
-      
-      {/* 流れ星エフェクト */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '20%',
-          left: '-10px',
-          width: '2px',
-          height: '2px',
-          backgroundColor: '#ffffff',
-          borderRadius: '50%',
-          animation: 'shootingStar 8s infinite linear',
-          boxShadow: '0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 30px #ffffff'
-        }}
-      />
-    </div>
-  );
-});
+import StarField from './components/StarField';
+import LoadingScreen from './components/LoadingScreen';
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -80,68 +20,67 @@ const App = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedForSwap, setSelectedForSwap] = useState<number | null>(null);
 
-// テーマ設定を以下に置き換え
-const theme = {
-  background: 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0e4b99 100%)',
-  card: 'rgba(255, 255, 255, 0.05)',
-  cardHover: 'rgba(255, 255, 255, 0.1)',
-  text: '#ffffff',
-  textSecondary: '#b0b0b0',
-  border: 'rgba(255, 255, 255, 0.1)',
-  primary: '#64b5f6',
-  success: '#81c784',
-  destructive: '#e57373',
-  shadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-  glassMorphism: 'backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);'
-};
+  // テーマ設定
+  const theme = {
+    background: 'linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0e4b99 100%)',
+    card: 'rgba(255, 255, 255, 0.05)',
+    cardHover: 'rgba(255, 255, 255, 0.1)',
+    text: '#ffffff',
+    textSecondary: '#b0b0b0',
+    border: 'rgba(255, 255, 255, 0.1)',
+    primary: '#64b5f6',
+    success: '#81c784',
+    destructive: '#e57373',
+    shadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+    glassMorphism: 'backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);'
+  };
 
-// スタイル設定も更新
-const styles = {
-  input: { 
-    width: '100%', 
-    padding: '12px', 
-    border: `1px solid ${theme.border}`, 
-    borderRadius: '12px', 
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    color: theme.text, 
-    fontSize: '16px', 
-    boxSizing: 'border-box' as const, 
-    outline: 'none', 
-    minHeight: '44px',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    transition: 'all 0.3s ease',
-    WebkitAppearance: 'none',
-    MozAppearance: 'textfield',
-    appearance: 'none'
-  },
-  button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
-    padding: '12px 16px', 
-    border: 'none', 
-    borderRadius: '12px', 
-    cursor: 'pointer', 
-    fontSize: '14px', 
-    fontWeight: '600', 
-    minHeight: '44px', 
-    backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : 'rgba(255, 255, 255, 0.1)', 
-    color: 'white',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    transition: 'all 0.3s ease',
-    border: `1px solid ${variant === 'secondary' ? theme.border : 'transparent'}`
-  }),
-  card: { 
-    backgroundColor: theme.card, 
-    borderRadius: '20px', 
-    padding: '24px', 
-    marginBottom: '20px', 
-    boxShadow: theme.shadow,
-    backdropFilter: 'blur(15px)',
-    WebkitBackdropFilter: 'blur(15px)',
-    border: `1px solid ${theme.border}`,
-    transition: 'all 0.3s ease'
-  }
-};
+  // スタイル設定
+  const styles = {
+    input: { 
+      width: '100%', 
+      padding: '12px', 
+      border: `1px solid ${theme.border}`, 
+      borderRadius: '12px', 
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      color: theme.text, 
+      fontSize: '16px', 
+      boxSizing: 'border-box' as const, 
+      outline: 'none', 
+      minHeight: '44px',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      transition: 'all 0.3s ease',
+      WebkitAppearance: 'none',
+      MozAppearance: 'textfield',
+      appearance: 'none'
+    },
+    button: (variant: 'primary' | 'secondary' | 'danger' = 'primary') => ({ 
+      padding: '12px 16px', 
+      borderRadius: '12px', 
+      cursor: 'pointer', 
+      fontSize: '14px', 
+      fontWeight: '600', 
+      minHeight: '44px', 
+      backgroundColor: variant === 'primary' ? theme.primary : variant === 'danger' ? theme.destructive : 'rgba(255, 255, 255, 0.1)', 
+      color: 'white',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      transition: 'all 0.3s ease',
+      border: `1px solid ${variant === 'secondary' ? theme.border : 'transparent'}`
+    }),
+    card: { 
+      backgroundColor: theme.card, 
+      borderRadius: '20px', 
+      padding: '24px', 
+      marginBottom: '20px', 
+      boxShadow: theme.shadow,
+      backdropFilter: 'blur(15px)',
+      WebkitBackdropFilter: 'blur(15px)',
+      border: `1px solid ${theme.border}`,
+      transition: 'all 0.3s ease'
+    }
+  };
 
   // ローディング画面用のuseEffect
   useEffect(() => {
@@ -151,105 +90,6 @@ const styles = {
 
     return () => clearTimeout(timer);
   }, []);
-
-// ローディング画面コンポーネント
-const LoadingScreen = () => {
-  const [dots, setDots] = useState('');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: theme.background,
-      color: theme.text,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      animation: 'fadeOut 0.8s ease-in-out 1.7s forwards'
-    }}>
-      <StarField />
-      
-      {/* メインロゴ */}
-      <div style={{
-        fontSize: '4rem',
-        fontWeight: '700',
-        color: theme.primary,
-        marginBottom: '2rem',
-        textShadow: `0 0 30px ${theme.primary}40`,
-        animation: 'glow 2s ease-in-out infinite alternate'
-      }}>
-        Focus
-      </div>
-
-      {/* サブタイトル */}
-      <div style={{
-        fontSize: '1.2rem',
-        color: theme.textSecondary,
-        marginBottom: '3rem',
-        opacity: 0.8,
-        animation: 'slideUp 1s ease-out 0.5s both'
-      }}>
-        星空の下でタスクを整理
-      </div>
-
-      {/* ローディングインジケーター */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        animation: 'slideUp 1s ease-out 1s both'
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: `3px solid ${theme.border}`,
-          borderTop: `3px solid ${theme.primary}`,
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}></div>
-        
-        <div style={{
-          fontSize: '1rem',
-          color: theme.textSecondary,
-          minWidth: '100px'
-        }}>
-          読み込み中{dots}
-        </div>
-      </div>
-
-      {/* 装飾的な要素 */}
-      <div style={{
-        position: 'absolute',
-        bottom: '10%',
-        display: 'flex',
-        gap: '2rem',
-        animation: 'slideUp 1s ease-out 1.5s both'
-      }}>
-        {['📝', '⭐', '🌙'].map((emoji, i) => (
-          <div key={i} style={{
-            fontSize: '2rem',
-            opacity: 0.5,
-            animation: `float 3s ease-in-out infinite ${i * 0.5}s`
-          }}>
-            {emoji}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string, duration = 1000) => {
     const id = Date.now();
@@ -317,60 +157,60 @@ const LoadingScreen = () => {
   };
 
   // モバイル用タッチイベント
-const handleTaskTap = (taskId: number) => {
-  // バルクモードの場合は選択切り替えのみ
-  if (bulkMode) {
-    const newSelected = new Set(selectedTasks);
-    if (newSelected.has(taskId)) {
-      newSelected.delete(taskId);
-    } else {
-      newSelected.add(taskId);
+  const handleTaskTap = (taskId: number) => {
+    // バルクモードの場合は選択切り替えのみ
+    if (bulkMode) {
+      const newSelected = new Set(selectedTasks);
+      if (newSelected.has(taskId)) {
+        newSelected.delete(taskId);
+      } else {
+        newSelected.add(taskId);
+      }
+      setSelectedTasks(newSelected);
+      return;
     }
-    setSelectedTasks(newSelected);
-    return;
-  }
 
-  // 入れ替えモードの場合のみ処理
-  if (selectedForSwap === null) {
-    setSelectedForSwap(taskId);
-    addNotification('info', 'もう1つのタスクをタップして入れ替え');
-  } else if (selectedForSwap === taskId) {
-    setSelectedForSwap(null);
-    addNotification('info', '選択を解除しました');
-  } else {
-    moveTask(selectedForSwap, taskId);
-    setSelectedForSwap(null);
-  }
-};
+    // 入れ替えモードの場合のみ処理
+    if (selectedForSwap === null) {
+      setSelectedForSwap(taskId);
+      addNotification('info', 'もう1つのタスクをタップして入れ替え');
+    } else if (selectedForSwap === taskId) {
+      setSelectedForSwap(null);
+      addNotification('info', '選択を解除しました');
+    } else {
+      moveTask(selectedForSwap, taskId);
+      setSelectedForSwap(null);
+    }
+  };
 
-// moveTask関数は既存のものをそのまま使用（ドラッグ関連のパラメータ名は変更）
-const moveTask = (sourceId: number, targetId: number) => {
-  if (!sourceId || sourceId === targetId) return;
-  
-  setTasks(prev => {
-    const sourceIndex = prev.findIndex(t => t.id === sourceId);
-    const targetIndex = prev.findIndex(t => t.id === targetId);
-    if (sourceIndex === -1 || targetIndex === -1) return prev;
+  // moveTask関数
+  const moveTask = (sourceId: number, targetId: number) => {
+    if (!sourceId || sourceId === targetId) return;
     
-    const newTasks = [...prev];
-    const [sourceItem] = newTasks.splice(sourceIndex, 1);
-    newTasks.splice(targetIndex, 0, sourceItem);
+    setTasks(prev => {
+      const sourceIndex = prev.findIndex(t => t.id === sourceId);
+      const targetIndex = prev.findIndex(t => t.id === targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return prev;
+      
+      const newTasks = [...prev];
+      const [sourceItem] = newTasks.splice(sourceIndex, 1);
+      newTasks.splice(targetIndex, 0, sourceItem);
+      
+      const updatedTasks = newTasks.map((task, index) => ({
+        ...task,
+        customOrder: Date.now() + index
+      }));
+      
+      return updatedTasks;
+    });
     
-    const updatedTasks = newTasks.map((task, index) => ({
-      ...task,
-      customOrder: Date.now() + index
-    }));
-    
-    return updatedTasks;
-  });
-  
-  if (sortBy !== 'custom') {
-    setSortBy('custom');
-    addNotification('info', 'カスタム順序に切り替えました');
-  } else {
-    addNotification('success', 'タスクを入れ替えました！');
-  }
-};
+    if (sortBy !== 'custom') {
+      setSortBy('custom');
+      addNotification('info', 'カスタム順序に切り替えました');
+    } else {
+      addNotification('success', 'タスクを入れ替えました！');
+    }
+  };
 
   const bulkActions = {
     delete: () => { 
@@ -427,7 +267,7 @@ const moveTask = (sourceId: number, targetId: number) => {
 
   // ローディング中の場合
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen theme={theme} />;
   }
 
   return (
