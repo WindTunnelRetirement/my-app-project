@@ -11,6 +11,7 @@ interface AppHeaderProps {
   theme: Theme;
   onLoginClick: () => void;
   onRegisterClick: () => void;
+  onLogout?: () => void; // 追加
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -20,10 +21,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   setBulkMode,
   theme,
   onLoginClick,
-  onRegisterClick
+  onRegisterClick,
+  onLogout // 追加
 }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const styles = createStyles(theme);
+
+  const handleLogoutClick = async () => {
+    if (onLogout) {
+      onLogout(); // App.tsxのhandleLogoutを呼ぶ
+    }
+    await logout(); // 実際のログアウト処理
+  };
 
   return (
     <div style={{ 
@@ -77,7 +86,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               {user?.name}さん
             </span>
             <button
-              onClick={logout}
+              onClick={handleLogoutClick}
               style={{
                 ...styles.button('secondary'),
                 padding: '8px 16px',

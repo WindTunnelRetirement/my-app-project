@@ -23,7 +23,7 @@ services:
     # volumes:
     #   - ./backend:/app
 
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
     ports:
       - "3000:3000"
     depends_on:
@@ -32,6 +32,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app_development
 
   frontend:
     build: ./frontend
