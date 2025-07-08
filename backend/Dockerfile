@@ -12,31 +12,29 @@ RUN apt-get update -qq && \
 # backendディレクトリのGemfileをコピー
 
 # 本番環境用
-COPY backend/Gemfile backend/Gemfile.lock ./
+# COPY backend/Gemfile backend/Gemfile.lock ./
 
-# COPY Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock ./
 
-# RUN bundle install
+RUN bundle install
 
 # 本番環境
-RUN bundle install --deployment --without development test
+# RUN bundle install --deployment --without development test
 
 # backendのアプリケーションコードをコピー
 
 # 本番環境用
-COPY backend/ .
+# COPY backend/ .
 
 COPY . .
 
 RUN mkdir -p tmp/cache tmp/pids log && \
     chmod -R 777 tmp log
 
-# ENV RAILS_ENV=development
-
 # 本番環境用の設定
-ENV RAILS_ENV=production
-ENV RAILS_LOG_TO_STDOUT=true
-ENV RAILS_SERVE_STATIC_FILES=true
+# ENV RAILS_ENV=production
+# ENV RAILS_LOG_TO_STDOUT=true
+# ENV RAILS_SERVE_STATIC_FILES=true
 
 EXPOSE 3000
 CMD ["sh", "-c", "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0"]
