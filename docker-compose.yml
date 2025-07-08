@@ -20,10 +20,10 @@ services:
     command: bash -c "rm -f tmp/pids/server.pid && rails s -b 0.0.0.0"
 
     # 本番環境用
-    # volumes:
-    #   - ./backend:/app
+    volumes:
+      - ./backend:/app
 
-    # user: "${UID}:${GID}"
+    user: "${UID}:${GID}"
     ports:
       - "3000:3000"
     depends_on:
