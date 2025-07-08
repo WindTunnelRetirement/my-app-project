@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAuth } from './context/AuthContext';
 import { useAppLogic } from './hooks/useAppLogic';
 import { AppHeader } from './components/AppHeader';
 import { TaskManager } from './components/TaskManager';
@@ -6,9 +7,14 @@ import { EmptyState } from './components/EmptyState';
 import StarField from './components/StarField';
 import LoadingScreen from './components/LoadingScreen';
 import { Notifications } from './components/Notifications';
+import { LoginForm } from './components/LoginForm';
+import { RegisterForm } from './components/RegisterForm';
 import { theme, globalStyles } from './styles/theme';
 
 const App = () => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null);
+  
   const {
     isLoading,
     taskManager,
@@ -19,7 +25,31 @@ const App = () => {
     completedCount
   } = useAppLogic();
 
-  if (isLoading) {
+  // ホームに戻る機能
+  const handleBackToHome = () => {
+    setAuthMode(null);
+  };
+
+  // 認証フォームの表示
+  if (!isAuthenticated && authMode === 'login') {
+    return (
+      <LoginForm 
+        onSwitchToRegister={() => setAuthMode('register')}
+        onBackToHome={handleBackToHome}
+      />
+    );
+  }
+  
+  if (!isAuthenticated && authMode === 'register') {
+    return (
+      <RegisterForm 
+        onSwitchToLogin={() => setAuthMode('login')}
+        onBackToHome={handleBackToHome}
+      />
+    );
+  }
+
+  if (isLoading || authLoading) {
     return <LoadingScreen theme={theme} />;
   }
 
@@ -44,6 +74,8 @@ const App = () => {
         bulkMode={bulkOperations.bulkMode}
         setBulkMode={bulkOperations.setBulkMode}
         theme={theme}
+        onLoginClick={() => setAuthMode('login')}
+        onRegisterClick={() => setAuthMode('register')}
       />
 
       <TaskManager 
