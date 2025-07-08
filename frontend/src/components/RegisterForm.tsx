@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
+  onBackToHome: () => void; // ホームに戻る機能を追加
 }
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin, onBackToHome }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +25,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
       [name]: value,
     }));
     
-    // エラーをクリア
     if (error) {
       clearError();
     }
@@ -51,147 +51,337 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
   const isPasswordMatch = formData.password === formData.password_confirmation;
   const isFormValid = formData.name && formData.email && formData.password && formData.password_confirmation && isPasswordMatch;
 
+  const containerStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+    padding: '48px 16px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  };
+
+  const backButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '24px',
+    left: '24px',
+    background: 'none',
+    border: 'none',
+    color: '#64748b',
+    fontSize: '14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    transition: 'all 0.2s',
+    fontWeight: '500'
+  };
+
+  const formContainerStyle: React.CSSProperties = {
+    maxWidth: '400px',
+    width: '100%',
+    backgroundColor: '#ffffff',
+    padding: '32px',
+    borderRadius: '12px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '1px solid #e2e8f0'
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1a202c',
+    textAlign: 'center',
+    marginBottom: '8px'
+  };
+
+  const subtitleStyle: React.CSSProperties = {
+    fontSize: '14px',
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: '24px'
+  };
+
+  const linkStyle: React.CSSProperties = {
+    color: '#3b82f6',
+    textDecoration: 'none',
+    fontWeight: '500',
+    cursor: 'pointer'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: '6px'
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px',
+    fontSize: '16px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box'
+  };
+
+  const inputErrorStyle: React.CSSProperties = {
+    ...inputStyle,
+    borderColor: '#ef4444'
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 16px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#ffffff',
+    backgroundColor: '#3b82f6',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    fontFamily: 'inherit'
+  };
+
+  const buttonDisabledStyle: React.CSSProperties = {
+    ...buttonStyle,
+    backgroundColor: '#9ca3af',
+    cursor: 'not-allowed'
+  };
+
+  const errorStyle: React.CSSProperties = {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '6px',
+    padding: '12px',
+    marginBottom: '16px'
+  };
+
+  const errorTextStyle: React.CSSProperties = {
+    color: '#dc2626',
+    fontSize: '14px',
+    margin: 0
+  };
+
+  const fieldErrorStyle: React.CSSProperties = {
+    color: '#dc2626',
+    fontSize: '12px',
+    marginTop: '4px'
+  };
+
+  const passwordContainerStyle: React.CSSProperties = {
+    position: 'relative',
+    marginBottom: '16px'
+  };
+
+  const eyeButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    right: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: '4px'
+  };
+
+  const inputGroupStyle: React.CSSProperties = {
+    marginBottom: '16px'
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            新規アカウント作成
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            すでにアカウントをお持ちの方は{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              ログイン
-            </button>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                お名前
-              </label>
+    <div style={containerStyle}>
+      {/* ホームに戻るボタン */}
+      <button
+        style={backButtonStyle}
+        onClick={onBackToHome}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = '#f1f5f9';
+          e.currentTarget.style.color = '#374151';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = '#64748b';
+        }}
+      >
+        <span style={{ fontSize: '16px' }}>←</span>
+        ホームに戻る
+      </button>
+
+      <div style={formContainerStyle}>
+        <h2 style={titleStyle}>新規アカウント作成</h2>
+        <p style={subtitleStyle}>
+          すでにアカウントをお持ちの方は{' '}
+          <span style={linkStyle} onClick={onSwitchToLogin}>
+            ログイン
+          </span>
+        </p>
+
+        <form onSubmit={handleSubmit}>
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>お名前</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              style={inputStyle}
+              placeholder="山田太郎"
+              required
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>メールアドレス</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              style={inputStyle}
+              placeholder="example@email.com"
+              required
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          <div style={passwordContainerStyle}>
+            <label style={labelStyle}>パスワード</label>
+            <div style={{ position: 'relative' }}>
               <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="山田太郎"
-                value={formData.name}
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
+                style={inputStyle}
+                placeholder="6文字以上"
+                required
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.boxShadow = 'none';
+                }}
               />
+              <button
+                type="button"
+                style={eyeButtonStyle}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                メールアドレス
-              </label>
+          <div style={passwordContainerStyle}>
+            <label style={labelStyle}>パスワード確認</label>
+            <div style={{ position: 'relative' }}>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="example@email.com"
-                value={formData.email}
+                type={showPasswordConfirmation ? 'text' : 'password'}
+                name="password_confirmation"
+                value={formData.password_confirmation}
                 onChange={handleChange}
+                style={formData.password_confirmation && !isPasswordMatch ? inputErrorStyle : inputStyle}
+                placeholder="パスワードを再入力"
+                required
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                }}
+                onBlur={(e) => {
+                  if (formData.password_confirmation && !isPasswordMatch) {
+                    e.target.style.borderColor = '#ef4444';
+                  } else {
+                    e.target.style.borderColor = '#e5e7eb';
+                  }
+                  e.target.style.boxShadow = 'none';
+                }}
               />
+              <button
+                type="button"
+                style={eyeButtonStyle}
+                onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+              >
+                {showPasswordConfirmation ? '🙈' : '👁️'}
+              </button>
             </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                パスワード
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="6文字以上"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  <span className="text-gray-400 hover:text-gray-600">
-                    {showPassword ? '🙈' : '👁️'}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">
-                パスワード確認
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password_confirmation"
-                  name="password_confirmation"
-                  type={showPasswordConfirmation ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  className={`block w-full px-3 py-2 pr-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                    formData.password_confirmation && !isPasswordMatch
-                      ? 'border-red-300'
-                      : 'border-gray-300'
-                  }`}
-                  placeholder="パスワードを再入力"
-                  value={formData.password_confirmation}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
-                >
-                  <span className="text-gray-400 hover:text-gray-600">
-                    {showPasswordConfirmation ? '🙈' : '👁️'}
-                  </span>
-                </button>
-              </div>
-              {formData.password_confirmation && !isPasswordMatch && (
-                <p className="mt-1 text-sm text-red-600">パスワードが一致しません</p>
-              )}
-            </div>
+            {formData.password_confirmation && !isPasswordMatch && (
+              <p style={fieldErrorStyle}>パスワードが一致しません</p>
+            )}
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
+            <div style={errorStyle}>
+              <p style={errorTextStyle}>{error}</p>
             </div>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading || !isFormValid}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  登録中...
-                </div>
-              ) : (
-                'アカウント作成'
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !isFormValid}
+            style={isLoading || !isFormValid ? buttonDisabledStyle : buttonStyle}
+            onMouseOver={(e) => {
+              if (!isLoading && isFormValid) {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!isLoading && isFormValid) {
+                e.currentTarget.style.backgroundColor = '#3b82f6';
+              }
+            }}
+          >
+            {isLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #ffffff',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginRight: '8px'
+                }}></div>
+                登録中...
+              </div>
+            ) : (
+              'アカウント作成'
+            )}
+          </button>
         </form>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
