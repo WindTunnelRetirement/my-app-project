@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useAppLogic } from './hooks/useAppLogic';
 import { AppHeader } from './components/AppHeader';
@@ -14,6 +14,7 @@ import { theme, globalStyles } from './styles/theme';
 const App = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register' | null>(null);
+  const [hasLoggedOut, setHasLoggedOut] = useState(false);
   
   const {
     isLoading,
@@ -25,9 +26,25 @@ const App = () => {
     completedCount
   } = useAppLogic();
 
-  // ホームに戻る機能
-  const handleBackToHome = () => {
-    setAuthMode(null);
+  // 認証状態の変化を監視
+  useEffect(() => {
+    if (!isAuthenticated && !authLoading) {
+      // ログアウト時のみログイン画面に遷移
+      if (hasLoggedOut) {
+        setAuthMode('login'); // 常にログイン画面に遷移
+        setHasLoggedOut(false);
+      }
+    } else if (isAuthenticated) {
+      // 認証成功時はauthModeをリセット
+      setAuthMode(null);
+    }
+  }, [isAuthenticated, authLoading, hasLoggedOut]);
+
+  // ログアウト処理をラップして、フラグを設定
+  const handleLogout = () => {
+    setHasLoggedOut(true);
+    setAuthMode('login'); // 確実にログイン画面に設定
+    // 実際のログアウト処理はAppHeaderで行われる
   };
 
   // 認証フォームの表示
@@ -35,7 +52,7 @@ const App = () => {
     return (
       <LoginForm 
         onSwitchToRegister={() => setAuthMode('register')}
-        onBackToHome={handleBackToHome}
+        onBackToHome={() => setAuthMode(null)}
       />
     );
   }
@@ -44,7 +61,7 @@ const App = () => {
     return (
       <RegisterForm 
         onSwitchToLogin={() => setAuthMode('login')}
-        onBackToHome={handleBackToHome}
+        onBackToHome={() => setAuthMode(null)}
       />
     );
   }
@@ -76,6 +93,7 @@ const App = () => {
         theme={theme}
         onLoginClick={() => setAuthMode('login')}
         onRegisterClick={() => setAuthMode('register')}
+        onLogout={handleLogout}
       />
 
       <TaskManager 
