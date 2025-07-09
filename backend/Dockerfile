@@ -28,9 +28,6 @@ COPY backend/ .
 
 # COPY . .
 
-# RUN mkdir -p tmp/cache tmp/pids log && \
-#     chmod -R 777 tmp log
-
 # 本番環境用の設定
 ENV RAILS_ENV=production
 ENV RAILS_LOG_TO_STDOUT=true
