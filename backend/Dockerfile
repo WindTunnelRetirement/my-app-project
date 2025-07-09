@@ -26,6 +26,7 @@ RUN bundle install --deployment --without development test
 # 本番環境用
 COPY backend/ .
 
+# 開発環境用
 # COPY . .
 
 # 本番環境用の設定
