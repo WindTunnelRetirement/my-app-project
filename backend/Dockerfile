@@ -26,10 +26,10 @@ RUN bundle install --deployment --without development test
 # 本番環境用
 COPY backend/ .
 
-COPY . .
+# COPY . .
 
-RUN mkdir -p tmp/cache tmp/pids log && \
-    chmod -R 777 tmp log
+# RUN mkdir -p tmp/cache tmp/pids log && \
+#     chmod -R 777 tmp log
 
 # 本番環境用の設定
 ENV RAILS_ENV=production
